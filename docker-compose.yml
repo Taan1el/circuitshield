@@ -1,0 +1,17 @@
+services:
+  circuitshield:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: circuitshield-app
+    ports:
+      - "4004:4004"
+    environment:
+      - NODE_ENV=production
+      - PORT=4004
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4004/api/health').then(r => r.ok ? process.exit(0) : process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
