@@ -11,7 +11,7 @@
 
 ---
 
-## ⚡ 2-Minute Overview
+## ⚡ Overview
 **CircuitShield** is an enterprise-grade resilience gateway and fault-tolerance proxy implementing the **Circuit Breaker** (Netflix Hystrix, Resilience4j, and Martin Fowler specifications) and **Bulkhead Isolation** patterns. It protects distributed microservices from cascading failures by monitoring downstream health, tripping open to fail fast when error or latency thresholds are breached, isolating concurrency with bulkheads, and autonomously self-healing via trial probes.
 
 ### Core Capabilities
@@ -19,7 +19,7 @@
 2. **Sliding-Window Ring Buffer**: Analyzes rolling call outcomes over the last $N$ requests (default 20 calls), computing both failure rate % and slow call rate % with a minimum call volume guard.
 3. **Bulkhead Concurrency Isolation**: Enforces strict execution concurrency limits per downstream route with bounded waiting queues, isolating failures so slow routes cannot starve healthy endpoints.
 4. **Graceful Fallback Degradation**: When circuits trip open or bulkheads saturate, CircuitShield returns rich degraded payloads (e.g. offline queuing, stale cache snapshots) keeping user workflows intact.
-5. **Interactive Chaos & Burst Traffic Sandbox**: Engineer dashboard allowing real-time injection of latency and error rates, paired with a concurrent burst generator to watch the circuit trip, fail fast, and self-heal.
+5. **Interactive Chaos & Burst Traffic Sandbox**: Operator dashboard allowing real-time injection of latency and error rates, paired with a concurrent burst generator to watch the circuit trip, fail fast, and self-heal.
 6. **Zero External Runtime Dependencies**: Pure TypeScript & Node.js 24 architecture running out of the box with zero external infrastructure requirements.
 
 ---
@@ -175,4 +175,4 @@ Key architectural decisions are documented under [`docs/adr/`](./docs/adr/):
 ---
 
 ## 📄 License
-MIT License. Built for technical demonstration and high-scale production architectures.
+MIT License.
