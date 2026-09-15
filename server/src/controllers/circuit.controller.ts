@@ -1,5 +1,20 @@
 import type { Request, Response } from 'express';
-import { CircuitService } from '../services/circuit.service.js';
+import { CircuitService } from '../../../shared/circuit.service.js';
+import { validateBurstRequest, validateChaosPatch, validateCircuitConfigPatch } from '../validation.js';
+
+// Generic message returned for anything unexpected, so a stack trace or
+// internal detail never reaches the client. The real error is still logged
+// server-side for debugging.
+const INTERNAL_ERROR_MESSAGE = 'Internal server error';
+
+function paramId(req: Request): string {
+  const raw = req.params.id;
+  return Array.isArray(raw) ? raw[0] : String(raw);
+}
+
+function logUnexpectedError(context: string, err: unknown): void {
+  console.error(`[CircuitShield] Unexpected error in ${context}:`, err);
+}
 
 export class CircuitController {
   constructor(private circuitService: CircuitService) {}
@@ -8,8 +23,9 @@ export class CircuitController {
     try {
       const stats = this.circuitService.getGlobalStats();
       res.json({ success: true, data: stats });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+    } catch (err) {
+      logUnexpectedError('getStats', err);
+      res.status(500).json({ success: false, error: INTERNAL_ERROR_MESSAGE });
     }
   };
 
@@ -17,105 +33,140 @@ export class CircuitController {
     try {
       const circuits = this.circuitService.getAllCircuits();
       res.json({ success: true, data: circuits });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+    } catch (err) {
+      logUnexpectedError('getAllCircuits', err);
+      res.status(500).json({ success: false, error: INTERNAL_ERROR_MESSAGE });
     }
   };
 
   public getCircuit = async (req: Request, res: Response) => {
     try {
-      const rawId = req.params.id;
-      const circuitId = Array.isArray(rawId) ? rawId[0] : String(rawId);
+      const circuitId = paramId(req);
       const circuit = this.circuitService.getCircuit(circuitId);
       if (!circuit) {
         res.status(404).json({ success: false, error: `Circuit '${circuitId}' not found` });
         return;
       }
       res.json({ success: true, data: circuit });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+    } catch (err) {
+      logUnexpectedError('getCircuit', err);
+      res.status(500).json({ success: false, error: INTERNAL_ERROR_MESSAGE });
     }
   };
 
   public executeCall = async (req: Request, res: Response) => {
     try {
-      const rawId = req.params.id;
-      const circuitId = Array.isArray(rawId) ? rawId[0] : String(rawId);
-      const result = await this.circuitService.executeCall(circuitId, req.body.payload);
+      const circuitId = paramId(req);
+      if (!this.circuitService.getCircuit(circuitId)) {
+        res.status(404).json({ success: false, error: `Circuit '${circuitId}' not found` });
+        return;
+      }
+      const result = await this.circuitService.executeCall(circuitId, req.body?.payload);
       res.json({ success: true, data: result });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+    } catch (err) {
+      logUnexpectedError('executeCall', err);
+      res.status(500).json({ success: false, error: INTERNAL_ERROR_MESSAGE });
     }
   };
 
   public resetCircuit = async (req: Request, res: Response) => {
     try {
-      const rawId = req.params.id;
-      const circuitId = Array.isArray(rawId) ? rawId[0] : String(rawId);
+      const circuitId = paramId(req);
+      if (!this.circuitService.getCircuit(circuitId)) {
+        res.status(404).json({ success: false, error: `Circuit '${circuitId}' not found` });
+        return;
+      }
       this.circuitService.forceReset(circuitId);
       const circuit = this.circuitService.getCircuit(circuitId);
       res.json({ success: true, data: circuit, message: `Circuit '${circuitId}' reset to CLOSED` });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+    } catch (err) {
+      logUnexpectedError('resetCircuit', err);
+      res.status(500).json({ success: false, error: INTERNAL_ERROR_MESSAGE });
     }
   };
 
   public tripCircuit = async (req: Request, res: Response) => {
     try {
-      const rawId = req.params.id;
-      const circuitId = Array.isArray(rawId) ? rawId[0] : String(rawId);
+      const circuitId = paramId(req);
+      if (!this.circuitService.getCircuit(circuitId)) {
+        res.status(404).json({ success: false, error: `Circuit '${circuitId}' not found` });
+        return;
+      }
       this.circuitService.forceTrip(circuitId);
       const circuit = this.circuitService.getCircuit(circuitId);
       res.json({ success: true, data: circuit, message: `Circuit '${circuitId}' tripped to OPEN` });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+    } catch (err) {
+      logUnexpectedError('tripCircuit', err);
+      res.status(500).json({ success: false, error: INTERNAL_ERROR_MESSAGE });
     }
   };
 
   public updateConfig = async (req: Request, res: Response) => {
     try {
-      const rawId = req.params.id;
-      const circuitId = Array.isArray(rawId) ? rawId[0] : String(rawId);
-      this.circuitService.updateCircuitConfig(circuitId, req.body);
+      const circuitId = paramId(req);
       const circuit = this.circuitService.getCircuit(circuitId);
-      res.json({ success: true, data: circuit });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+      if (!circuit) {
+        res.status(404).json({ success: false, error: `Circuit '${circuitId}' not found` });
+        return;
+      }
+      const validated = validateCircuitConfigPatch(req.body, circuit.config);
+      if ('error' in validated) {
+        res.status(400).json({ success: false, error: validated.error });
+        return;
+      }
+      this.circuitService.updateCircuitConfig(circuitId, validated.value);
+      const updated = this.circuitService.getCircuit(circuitId);
+      res.json({ success: true, data: updated });
+    } catch (err) {
+      logUnexpectedError('updateConfig', err);
+      res.status(500).json({ success: false, error: INTERNAL_ERROR_MESSAGE });
     }
   };
 
   public updateChaos = async (req: Request, res: Response) => {
     try {
-      const rawId = req.params.id;
-      const serviceId = Array.isArray(rawId) ? rawId[0] : String(rawId);
-      const { latencyMs, errorRatePercent } = req.body;
+      const serviceId = paramId(req);
+      const validated = validateChaosPatch(req.body);
+      if ('error' in validated) {
+        res.status(400).json({ success: false, error: validated.error });
+        return;
+      }
       const updated = this.circuitService.updateDownstreamChaos(
         serviceId,
-        latencyMs ?? 50,
-        errorRatePercent ?? 0
+        validated.value.latencyMs,
+        validated.value.errorRatePercent
       );
       res.json({ success: true, data: updated });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+    } catch (err) {
+      logUnexpectedError('updateChaos', err);
+      res.status(500).json({ success: false, error: INTERNAL_ERROR_MESSAGE });
     }
   };
 
   public runBurst = async (req: Request, res: Response) => {
     try {
-      const rawId = req.params.id;
-      const circuitId = Array.isArray(rawId) ? rawId[0] : String(rawId);
-      const concurrency = req.body.concurrency ? parseInt(req.body.concurrency, 10) : 20;
+      const circuitId = paramId(req);
+      if (!this.circuitService.getCircuit(circuitId)) {
+        res.status(404).json({ success: false, error: `Circuit '${circuitId}' not found` });
+        return;
+      }
+      const validated = validateBurstRequest(req.body);
+      if ('error' in validated) {
+        res.status(400).json({ success: false, error: validated.error });
+        return;
+      }
 
       const result = await this.circuitService.runBurstTest({
         circuitId,
-        concurrency,
-        simulatedLatencyMs: req.body.latencyMs,
-        simulatedErrorRatePercent: req.body.errorRatePercent,
+        concurrency: validated.value.concurrency,
+        simulatedLatencyMs: validated.value.latencyMs,
+        simulatedErrorRatePercent: validated.value.errorRatePercent,
       });
 
       res.json({ success: true, data: result });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+    } catch (err) {
+      logUnexpectedError('runBurst', err);
+      res.status(500).json({ success: false, error: INTERNAL_ERROR_MESSAGE });
     }
   };
 }

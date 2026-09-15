@@ -1,4 +1,4 @@
-import { CircuitBreaker } from '../circuit/circuit-breaker.js';
+import { CircuitBreaker } from './circuit-breaker.js';
 import type {
   CircuitBreakerInfo,
   CircuitConfig,
@@ -7,7 +7,7 @@ import type {
   BurstTestRequest,
   BurstTestResult,
   GlobalStats,
-} from '../../../shared/types.js';
+} from './types.js';
 
 export class CircuitService {
   private circuits = new Map<string, CircuitBreaker>();

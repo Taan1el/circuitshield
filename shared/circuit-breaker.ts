@@ -1,4 +1,4 @@
-import { Bulkhead } from '../bulkhead/bulkhead.js';
+import { Bulkhead } from './bulkhead.js';
 import type {
   CircuitConfig,
   CircuitMetrics,
@@ -7,7 +7,7 @@ import type {
   CallRecord,
   CircuitBreakerInfo,
   ExecutionResult,
-} from '../../../shared/types.js';
+} from './types.js';
 
 export class CircuitBreaker {
   private id: string;
@@ -255,7 +255,11 @@ export class CircuitBreaker {
 
   public updateConfig(newConfig: Partial<CircuitConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    if (newConfig.bulkheadMaxConcurrent || newConfig.bulkheadMaxWaitMs) {
+    // Truthy checks here would silently drop a deliberate 0 (or ignore a
+    // no-op wait time), leaving the live Bulkhead instance out of sync with
+    // the config this.getInfo() reports as active. Check for presence
+    // instead of truthiness.
+    if (newConfig.bulkheadMaxConcurrent !== undefined || newConfig.bulkheadMaxWaitMs !== undefined) {
       this.bulkhead.setConfig(this.config.bulkheadMaxConcurrent, this.config.bulkheadMaxWaitMs);
     }
   }

@@ -3,7 +3,7 @@ import cors from 'cors';
 import path from 'node:path';
 import fs from 'node:fs';
 import { createApiRouter } from './routes/api.routes.js';
-import { CircuitService } from './services/circuit.service.js';
+import { CircuitService } from '../../shared/circuit.service.js';
 
 export function createApp(circuitService?: CircuitService) {
   const app = express();

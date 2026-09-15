@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
-import { Bulkhead } from '../src/bulkhead/bulkhead.js';
-import { CircuitBreaker } from '../src/circuit/circuit-breaker.js';
-import { CircuitService } from '../src/services/circuit.service.js';
+import { Bulkhead } from '../../shared/bulkhead.js';
+import { CircuitBreaker } from '../../shared/circuit-breaker.js';
+import { CircuitService } from '../../shared/circuit.service.js';
 import { createApp } from '../src/app.js';
 
 describe('Bulkhead Concurrency Limiter', () => {
@@ -27,6 +27,38 @@ describe('Bulkhead Concurrency Limiter', () => {
     release2();
     release3();
     expect(bulkhead.getActiveCount()).toBe(0);
+  });
+});
+
+describe('CircuitBreaker.updateConfig bulkhead sync', () => {
+  it('applies a bulkheadMaxWaitMs of 0 to the live bulkhead instead of ignoring it as falsy', async () => {
+    const circuit = new CircuitBreaker('sync-test', 'Sync Test', 'test-downstream', {
+      bulkheadMaxConcurrent: 1,
+      bulkheadMaxWaitMs: 200,
+    });
+
+    // Saturate the only slot with a call that never resolves on its own.
+    let releaseHeld: (() => void) | null = null;
+    const held = circuit.execute(
+      () => new Promise((resolve) => { releaseHeld = () => resolve('done'); })
+    );
+
+    // Give the held call a tick to acquire its bulkhead slot.
+    await new Promise((r) => setTimeout(r, 10));
+
+    // A truthy check on `newConfig.bulkheadMaxWaitMs` would treat 0 as
+    // "not provided" and leave the live bulkhead waiting up to 200ms.
+    circuit.updateConfig({ bulkheadMaxWaitMs: 0 });
+
+    const start = performance.now();
+    const rejected = await circuit.execute(async () => 'never runs');
+    const elapsed = performance.now() - start;
+
+    expect(rejected.outcome).toBe('BULKHEAD_REJECTED');
+    expect(elapsed).toBeLessThan(50); // rejected immediately, not after a 200ms wait
+
+    releaseHeld!();
+    await held;
   });
 });
 
@@ -194,5 +226,104 @@ describe('CircuitShield Service & REST API Integration', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.totalRequests).toBe(10);
     expect(res.body.data.successes).toBe(10);
+  });
+});
+
+describe('Input validation and error handling', () => {
+  let app: any;
+  let service: CircuitService;
+
+  beforeEach(() => {
+    service = new CircuitService();
+    const created = createApp(service);
+    app = created.app;
+  });
+
+  it('returns 404 (not 500) for every mutating route when the circuit id is unknown', async () => {
+    const routes: Array<[string, string]> = [
+      ['get', '/api/circuits/does-not-exist'],
+      ['post', '/api/circuits/does-not-exist/execute'],
+      ['post', '/api/circuits/does-not-exist/reset'],
+      ['post', '/api/circuits/does-not-exist/trip'],
+      ['post', '/api/circuits/does-not-exist/config'],
+      ['post', '/api/circuits/does-not-exist/burst-test'],
+    ];
+
+    for (const [method, path] of routes) {
+      const res = await (request(app) as any)[method](path).send({});
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error).toMatch(/not found/i);
+    }
+  });
+
+  it('rejects a config update with an out-of-range field and leaves the config unchanged', async () => {
+    const before = await request(app).get('/api/circuits/payments');
+
+    const res = await request(app)
+      .post('/api/circuits/payments/config')
+      .send({ failureRateThresholdPercent: 150 });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toMatch(/failureRateThresholdPercent/);
+
+    const after = await request(app).get('/api/circuits/payments');
+    expect(after.body.data.config).toEqual(before.body.data.config);
+  });
+
+  it('rejects a config update where minCallsThreshold would exceed slidingWindowSize', async () => {
+    const res = await request(app)
+      .post('/api/circuits/payments/config')
+      .send({ slidingWindowSize: 3, minCallsThreshold: 5 });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/minCallsThreshold/);
+    expect(res.body.error).toMatch(/slidingWindowSize/);
+  });
+
+  it('accepts a valid partial config update and applies it', async () => {
+    const res = await request(app)
+      .post('/api/circuits/payments/config')
+      .send({ resetTimeoutMs: 1234 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.config.resetTimeoutMs).toBe(1234);
+  });
+
+  it('rejects a burst-test with a non-numeric or out-of-range concurrency instead of returning NaN averages', async () => {
+    const badString = await request(app)
+      .post('/api/circuits/payments/burst-test')
+      .send({ concurrency: 'lots' });
+    expect(badString.status).toBe(400);
+    expect(badString.body.error).toMatch(/concurrency/i);
+
+    const zero = await request(app)
+      .post('/api/circuits/payments/burst-test')
+      .send({ concurrency: 0 });
+    expect(zero.status).toBe(400);
+
+    const tooMany = await request(app)
+      .post('/api/circuits/payments/burst-test')
+      .send({ concurrency: 500 });
+    expect(tooMany.status).toBe(400);
+  });
+
+  it('rejects out-of-range chaos values', async () => {
+    const res = await request(app)
+      .post('/api/services/payments/chaos')
+      .send({ latencyMs: -5, errorRatePercent: 60 });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/latencyMs/);
+  });
+
+  it('accepts valid chaos values', async () => {
+    const res = await request(app)
+      .post('/api/services/payments/chaos')
+      .send({ latencyMs: 25, errorRatePercent: 10 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ serviceId: 'payments', simulatedLatencyMs: 25, simulatedErrorRatePercent: 10 });
   });
 });
