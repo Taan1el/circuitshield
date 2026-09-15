@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { CircuitService } from '../../../shared/circuit.service.js';
-import { validateBurstRequest, validateChaosPatch, validateCircuitConfigPatch } from '../validation.js';
+import { validateBurstRequest, validateChaosPatch, validateCircuitConfigPatch } from '../../../shared/validation.js';
 
 // Generic message returned for anything unexpected, so a stack trace or
 // internal detail never reaches the client. The real error is still logged

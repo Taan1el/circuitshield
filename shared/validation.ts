@@ -1,4 +1,4 @@
-import type { CircuitConfig } from '../../shared/types.js';
+import type { CircuitConfig } from './types.js';
 
 // Small hand-rolled request validation. The input surface here is a handful
 // of numeric fields, so a schema library would add a dependency for less

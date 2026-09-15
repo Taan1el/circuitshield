@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { BurstTestResult } from '../../../shared/types.js';
-import { runBurstTest, updateServiceChaos } from '../services/api.js';
+import { runBurstTest, updateServiceChaos } from '../services/index.js';
 
 interface ChaosSimulatorProps {
   onMutated: () => void;

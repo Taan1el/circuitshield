@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { CircuitBreakerInfo, ExecutionResult } from '../../../shared/types.js';
-import { executeCircuitCall, resetCircuit, tripCircuit } from '../services/api.js';
+import { executeCircuitCall, resetCircuit, tripCircuit } from '../services/index.js';
 
 interface CircuitCardProps {
   circuit: CircuitBreakerInfo;

@@ -49,6 +49,24 @@ body {
   min-height: 100vh;
 }
 
+.demo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 1.5rem;
+  background: rgba(59, 130, 246, 0.12);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.demo-banner a {
+  color: #93c5fd;
+}
+
 /* Header */
 .app-header {
   display: flex;

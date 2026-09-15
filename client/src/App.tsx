@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { GlobalStats, CircuitBreakerInfo } from '../../shared/types.js';
-import { fetchStats, fetchCircuits } from './services/api.js';
+import { fetchStats, fetchCircuits } from './services/index.js';
 import { Header } from './components/Header.js';
 import { StatsBar } from './components/StatsBar.js';
 import { CircuitCard } from './components/CircuitCard.js';
 import { ChaosSimulator } from './components/ChaosSimulator.js';
+import { DemoBanner } from './components/DemoBanner.js';
 import './App.css';
 
 export const App: React.FC = () => {
@@ -43,6 +44,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-container">
+      <DemoBanner onReset={() => loadData(true)} />
       <Header
         totalCircuits={circuits.length}
         openCount={openCircuits}
