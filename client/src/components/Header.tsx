@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
           <p className="brand-subtitle">
-            Distributed Circuit Breaker Gateway, Bulkhead Isolation &amp; Adaptive Fault Tolerance
+            Circuit Breaker Gateway, Bulkhead Isolation &amp; Adaptive Fault Tolerance
           </p>
         </div>
       </div>
