@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import path from 'node:path';
 import request from 'supertest';
 import { Bulkhead } from '../../shared/bulkhead.js';
 import { CircuitBreaker } from '../../shared/circuit-breaker.js';
 import { CircuitService } from '../../shared/circuit.service.js';
-import { createApp } from '../src/app.js';
+import { createApp, resolveClientDistPath } from '../src/app.js';
 
 describe('Bulkhead Concurrency Limiter', () => {
   it('enforces maximum concurrent execution slots and queues excess', async () => {
@@ -325,5 +326,17 @@ describe('Input validation and error handling', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual({ serviceId: 'payments', simulatedLatencyMs: 25, simulatedErrorRatePercent: 10 });
+  });
+});
+
+describe('Static client build path resolution', () => {
+  it('resolves client/dist as a sibling of the server directory, not of its parent', () => {
+    // Both `npm start --workspace=server` and the Docker image's WORKDIR
+    // run node with the server/ directory as cwd (see the Dockerfile).
+    // Resolving from the repo root instead (the pre-fix bug: the Docker
+    // image ran `node server/dist/...` from /app, one level too high) would
+    // point at a nonexistent .../client/dist outside the app entirely.
+    expect(resolveClientDistPath('/app/server')).toBe(path.resolve('/app', 'client/dist'));
+    expect(resolveClientDistPath('/app/server')).not.toBe(path.resolve('/app/..', 'client/dist'));
   });
 });
