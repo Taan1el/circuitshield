@@ -105,6 +105,38 @@ describe('CircuitBreaker Finite State Machine', () => {
     expect(failedProbe.isFallback).toBe(true);
     expect(circuit.getInfo().state).toBe('OPEN');
   });
+
+  it('treats a slow probe during HALF_OPEN as a failed probe instead of healing the circuit', async () => {
+    const slowCircuit = new CircuitBreaker(
+      'slow-probe-circuit',
+      'Slow Probe Circuit',
+      'test-downstream',
+      {
+        minCallsThreshold: 4,
+        failureRateThresholdPercent: 50,
+        resetTimeoutMs: 150,
+        halfOpenTrialCalls: 2,
+        bulkheadMaxConcurrent: 10,
+        slowCallDurationThresholdMs: 20,
+      },
+      { fallback: true }
+    );
+
+    slowCircuit.tripOpen();
+    await new Promise((r) => setTimeout(r, 180));
+
+    // The probe answers successfully but takes longer than the slow-call
+    // threshold, so the downstream is still effectively unhealthy.
+    const slowProbe = await slowCircuit.execute(async () => {
+      await new Promise((r) => setTimeout(r, 40));
+      return 'slow but alive';
+    });
+
+    expect(slowProbe.outcome).toBe('SLOW');
+    expect(slowProbe.isFallback).toBe(false);
+    expect(slowProbe.state).toBe('OPEN');
+    expect(slowCircuit.getInfo().state).toBe('OPEN');
+  });
 });
 
 describe('CircuitShield Service & REST API Integration', () => {

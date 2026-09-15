@@ -138,7 +138,7 @@ export class CircuitBreaker {
         this.recordOutcome('SUCCESS', durationMs);
       }
 
-      this.handleSuccessInState();
+      this.handleSuccessInState(isSlow);
 
       return {
         circuitId: this.id,
@@ -185,8 +185,16 @@ export class CircuitBreaker {
     }
   }
 
-  private handleSuccessInState(): void {
+  private handleSuccessInState(isSlow: boolean): void {
     if (this.state === 'HALF_OPEN') {
+      if (isSlow) {
+        // The downstream answered without throwing, but a trial probe that
+        // breaches the slow-call threshold means it is still degraded.
+        // Counting it as a healthy probe would let a merely-slow dependency
+        // heal the circuit; trip back to OPEN the same as a failed probe.
+        this.tripOpen();
+        return;
+      }
       this.halfOpenSuccesses++;
       if (this.halfOpenSuccesses >= this.config.halfOpenTrialCalls) {
         // All trial probe calls succeeded! Reset to CLOSED
