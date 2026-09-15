@@ -102,7 +102,7 @@ export const CircuitCard: React.FC<CircuitCardProps> = ({ circuit, onMutated }) 
         </div>
       )}
 
-      {/* Sliding Window Ring Buffer */}
+      {/* Sliding window of recent call outcomes */}
       <div className="ring-buffer-section">
         <div className="ring-header">
           <span className="ring-label">Sliding Window (Last {recentRecords.length} / {config.slidingWindowSize} calls)</span>

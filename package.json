@@ -1,9 +1,20 @@
 {
   "name": "circuitshield",
   "version": "1.0.0",
-  "description": "Distributed Circuit Breaker Gateway, Bulkhead Isolation & Adaptive Fault Tolerance Engine",
+  "description": "Circuit breaker gateway with bulkhead isolation and a sliding-window failure detector",
   "private": true,
   "type": "module",
+  "homepage": "https://taan1el.github.io/circuitshield/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Taan1el/circuitshield.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Taan1el/circuitshield/issues"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "workspaces": [
     "server",
     "client"
@@ -29,9 +40,8 @@
     "sliding-window",
     "hystrix",
     "resilience4j",
-    "react19",
-    "sqlite-wal"
+    "react19"
   ],
-  "author": "Taaneiel",
+  "author": "Taaniel Vananurm",
   "license": "MIT"
 }

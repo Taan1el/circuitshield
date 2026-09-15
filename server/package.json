@@ -1,9 +1,10 @@
 {
   "name": "@circuitshield/server",
   "version": "1.0.0",
-  "description": "CircuitShield Resilience Gateway & Fault Tolerance Engine",
+  "description": "CircuitShield Express API: circuit breaker state machine, sliding window and bulkhead isolation",
   "private": true,
   "type": "module",
+  "license": "MIT",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

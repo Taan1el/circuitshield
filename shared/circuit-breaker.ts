@@ -18,7 +18,8 @@ export class CircuitBreaker {
   private bulkhead: Bulkhead;
   private fallbackPayload: Record<string, unknown>;
 
-  // Sliding window ring buffer
+  // Bounded sliding window of recent call outcomes; recordOutcome() below
+  // drops the oldest entry once it grows past config.slidingWindowSize.
   private window: CallRecord[] = [];
 
   // State transitions & timer

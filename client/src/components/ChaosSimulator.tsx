@@ -58,7 +58,8 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
         <span className="section-badge badge-red">Chaos Injection &amp; Stress Test</span>
         <h2 className="card-title">Downstream Dependency Chaos &amp; Burst Generator</h2>
         <p className="card-subtitle">
-          Inject latency and errors into downstream microservices, then fire concurrent bursts to witness the Circuit Breaker trip and protect the system with sub-millisecond fallbacks.
+          Dial in simulated latency and an error rate for a circuit's downstream call, then fire a concurrent
+          burst and watch it trip, fail fast, and fall back to its configured response.
         </p>
       </div>
 

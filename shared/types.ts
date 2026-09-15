@@ -15,7 +15,7 @@ export interface CircuitConfig {
   slowCallRateThresholdPercent: number; // e.g. 50%
   slowCallDurationThresholdMs: number; // e.g. 500ms
   minCallsThreshold: number; // e.g. 5 calls before evaluating
-  slidingWindowSize: number; // e.g. 20 calls ring buffer
+  slidingWindowSize: number; // e.g. 20 most recent calls
   resetTimeoutMs: number; // cooldown before HALF_OPEN, e.g. 5000ms
   halfOpenTrialCalls: number; // number of probe calls in HALF_OPEN, e.g. 3
   bulkheadMaxConcurrent: number; // max concurrent active calls, e.g. 5

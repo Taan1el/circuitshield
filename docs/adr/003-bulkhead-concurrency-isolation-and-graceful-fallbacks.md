@@ -15,9 +15,10 @@ We implemented Bulkhead Concurrency Isolation:
 
 ## Consequences
 ### Positive
-- Strict blast-radius containment: a slow endpoint cannot exhaust global gateway resources.
-- Deterministic response times even during downstream latency surges.
+- Blast-radius containment: a slow endpoint is capped at its own concurrency quota and cannot starve other circuits sharing the same process.
+- A bounded worst-case wait (`bulkheadMaxWaitMs`) instead of an unbounded queue during downstream latency surges.
 - Graceful degradation preserves end-user transaction workflows.
 
 ### Trade-offs
 - Concurrency thresholds must be tuned appropriately per dependency traffic profile.
+- The waiting queue's depth is capped at three times `bulkheadMaxConcurrent`, a fixed multiplier rather than a value exposed in `CircuitConfig`.

@@ -68,9 +68,9 @@ export const App: React.FC = () => {
 
         <div className="circuits-section">
           <div className="section-title-row">
-            <h2 className="section-heading">Protected Microservice Routes ({circuits.length})</h2>
+            <h2 className="section-heading">Protected Routes ({circuits.length})</h2>
             <span className="section-sub">
-              Finite state machines monitoring error rates and slow calls via sliding-window ring buffers.
+              Each circuit tracks its own error rate and slow-call rate over a sliding window of recent calls.
             </span>
           </div>
 
@@ -88,14 +88,14 @@ export const App: React.FC = () => {
 
       <footer className="app-footer">
         <div>
-          <strong>CircuitShield</strong> &bull; Production Distributed Circuit Breaker &amp; Bulkhead Gateway
+          <strong>CircuitShield</strong> &bull; Circuit Breaker &amp; Bulkhead Gateway
         </div>
         <div className="footer-links">
-          <span>Netflix Hystrix / Resilience4j Spec</span>
+          <span>Inspired by Hystrix / Resilience4j</span>
           <span>&bull;</span>
-          <span>Sliding-Window Ring Buffer</span>
+          <span>Sliding-Window Failure Detector</span>
           <span>&bull;</span>
-          <span>Sub-Millisecond Fast Fails</span>
+          <span>In-Process Fail-Fast</span>
         </div>
       </footer>
     </div>
