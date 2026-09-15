@@ -15,16 +15,18 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
   const [isRunningBurst, setIsRunningBurst] = useState(false);
   const [burstResult, setBurstResult] = useState<BurstTestResult | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleApplyChaos = async () => {
     setIsApplying(true);
     setStatusMsg(null);
+    setErrorMsg(null);
     try {
       await updateServiceChaos(selectedCircuit, latencyMs, errorRate);
       setStatusMsg(`Chaos profile applied to ${selectedCircuit}: ${latencyMs}ms, ${errorRate}% errors`);
       onMutated();
     } catch (err: any) {
-      alert(`Failed: ${err.message}`);
+      setErrorMsg(`Failed to apply chaos profile: ${err.message}`);
     } finally {
       setIsApplying(false);
     }
@@ -33,6 +35,7 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
   const handleRunBurst = async () => {
     setIsRunningBurst(true);
     setBurstResult(null);
+    setErrorMsg(null);
     try {
       const result = await runBurstTest({
         circuitId: selectedCircuit,
@@ -43,7 +46,7 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
       setBurstResult(result);
       onMutated();
     } catch (err: any) {
-      alert(`Burst failed: ${err.message}`);
+      setErrorMsg(`Burst test failed: ${err.message}`);
     } finally {
       setIsRunningBurst(false);
     }
@@ -61,8 +64,9 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
 
       <div className="sim-controls-grid">
         <div className="sim-group">
-          <label className="form-label">Target Service Circuit</label>
+          <label className="form-label" htmlFor="chaos-target-circuit">Target Service Circuit</label>
           <select
+            id="chaos-target-circuit"
             className="form-select"
             value={selectedCircuit}
             onChange={(e) => setSelectedCircuit(e.target.value)}
@@ -76,10 +80,11 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
 
         <div className="sim-group">
           <div className="slider-label-row">
-            <label className="form-label">Simulated Latency</label>
+            <label className="form-label" htmlFor="chaos-latency">Simulated Latency</label>
             <span className="slider-val">{latencyMs} ms</span>
           </div>
           <input
+            id="chaos-latency"
             type="range"
             min="10"
             max="1000"
@@ -88,15 +93,17 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
             onChange={(e) => setLatencyMs(Number(e.target.value))}
             className="slider-range"
             disabled={isRunningBurst}
+            aria-valuetext={`${latencyMs} milliseconds`}
           />
         </div>
 
         <div className="sim-group">
           <div className="slider-label-row">
-            <label className="form-label">Simulated Failure Rate</label>
+            <label className="form-label" htmlFor="chaos-error-rate">Simulated Failure Rate</label>
             <span className="slider-val text-rose">{errorRate}%</span>
           </div>
           <input
+            id="chaos-error-rate"
             type="range"
             min="0"
             max="100"
@@ -105,15 +112,17 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
             onChange={(e) => setErrorRate(Number(e.target.value))}
             className="slider-range"
             disabled={isRunningBurst}
+            aria-valuetext={`${errorRate} percent`}
           />
         </div>
 
         <div className="sim-group">
           <div className="slider-label-row">
-            <label className="form-label">Burst Concurrency</label>
+            <label className="form-label" htmlFor="chaos-concurrency">Burst Concurrency</label>
             <span className="slider-val text-cyan">{concurrency} reqs</span>
           </div>
           <input
+            id="chaos-concurrency"
             type="range"
             min="5"
             max="50"
@@ -122,9 +131,14 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
             onChange={(e) => setConcurrency(Number(e.target.value))}
             className="slider-range"
             disabled={isRunningBurst}
+            aria-valuetext={`${concurrency} requests`}
           />
         </div>
       </div>
+
+      {errorMsg && (
+        <p className="inline-error" role="alert">{errorMsg}</p>
+      )}
 
       <div className="sim-action-row">
         <button

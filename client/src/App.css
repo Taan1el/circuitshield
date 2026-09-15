@@ -7,7 +7,7 @@
 
   --text-primary: #f9fafb;
   --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
+  --text-muted: #8b93a3;
 
   --color-closed: #10b981;
   --color-open: #f43f5e;
@@ -25,6 +25,14 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* Focus visibility: a consistent, visible ring on every interactive element
+   when navigating by keyboard, without adding one on a mouse click. */
+:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 body {
@@ -46,6 +54,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
   padding: 1.25rem 2rem;
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
@@ -217,6 +227,27 @@ body {
   100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
 }
 
+.alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.alert-error {
+  background-color: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: #fda4af;
+}
+
+.inline-error {
+  color: #fca5a5;
+  font-size: 0.78rem;
+}
+
 .section-badge {
   display: inline-block;
   font-size: 0.7rem;
@@ -370,7 +401,6 @@ body {
   color: var(--text-primary);
   padding: 0.55rem 0.75rem;
   font-size: 0.85rem;
-  outline: none;
 }
 
 .sim-action-row {
@@ -460,6 +490,17 @@ body {
 
 @media (max-width: 640px) {
   .circuits-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .app-header,
+  .app-main,
+  .app-footer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .gauges-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -793,6 +834,7 @@ body {
   background: rgba(244, 63, 94, 0.25);
 }
 
+.btn-xs { padding: 0.25rem 0.55rem; font-size: 0.72rem; }
 .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
 .btn-md { padding: 0.55rem 1.1rem; font-size: 0.85rem; }
 

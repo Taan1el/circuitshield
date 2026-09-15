@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import App from '../App.js';
 import type { GlobalStats, CircuitBreakerInfo } from '../../../shared/types.js';
 
@@ -150,5 +150,48 @@ describe('CircuitShield Operations Console', () => {
       expect(screen.getByText('0 / 4 active')).toBeInTheDocument();
       expect(screen.getByText('1 / 6 active')).toBeInTheDocument();
     });
+  });
+
+  it('associates every chaos simulator control with a label a screen reader can announce', async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Downstream Dependency Chaos & Burst Generator/i)).toBeInTheDocument();
+    });
+
+    expect(screen.getByLabelText(/Target Service Circuit/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Simulated Latency/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Simulated Failure Rate/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Burst Concurrency/i)).toBeInTheDocument();
+  });
+
+  it('shows an inline, accessible error instead of a native alert when a call fails', async () => {
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/execute')) {
+        return Promise.resolve({
+          ok: false,
+          statusText: 'Internal Server Error',
+          json: async () => ({ success: false, error: 'Internal server error' }),
+        });
+      }
+      if (url.includes('/stats')) {
+        return Promise.resolve({ ok: true, json: async () => ({ success: true, data: mockStats }) });
+      }
+      if (url.includes('/circuits')) {
+        return Promise.resolve({ ok: true, json: async () => ({ success: true, data: mockCircuits }) });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({ success: true, data: {} }) });
+    });
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+    render(<App />);
+
+    const executeButtons = await screen.findAllByRole('button', { name: /Test 1 Call/i });
+    fireEvent.click(executeButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/Call failed/i);
+    });
+    expect(alertSpy).not.toHaveBeenCalled();
   });
 });

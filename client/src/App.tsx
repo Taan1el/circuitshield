@@ -52,7 +52,7 @@ export const App: React.FC = () => {
 
       <main className="app-main">
         {error && (
-          <div className="alert alert-error global-alert">
+          <div className="alert alert-error global-alert" role="alert">
             <span>⚠️ {error}</span>
             <button className="btn btn-secondary btn-xs" onClick={() => loadData(true)}>
               Retry

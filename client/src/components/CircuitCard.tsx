@@ -11,35 +11,39 @@ export const CircuitCard: React.FC<CircuitCardProps> = ({ circuit, onMutated }) 
   const [executing, setExecuting] = useState(false);
   const [lastResult, setLastResult] = useState<ExecutionResult | null>(null);
   const [showFallback, setShowFallback] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const handleExecute = async () => {
     setExecuting(true);
+    setActionError(null);
     try {
       const result = await executeCircuitCall(circuit.id);
       setLastResult(result);
       onMutated();
     } catch (err: any) {
-      alert(`Call failed: ${err.message}`);
+      setActionError(`Call failed: ${err.message}`);
     } finally {
       setExecuting(false);
     }
   };
 
   const handleReset = async () => {
+    setActionError(null);
     try {
       await resetCircuit(circuit.id);
       onMutated();
     } catch (err: any) {
-      alert(`Reset failed: ${err.message}`);
+      setActionError(`Reset failed: ${err.message}`);
     }
   };
 
   const handleTrip = async () => {
+    setActionError(null);
     try {
       await tripCircuit(circuit.id);
       onMutated();
     } catch (err: any) {
-      alert(`Trip failed: ${err.message}`);
+      setActionError(`Trip failed: ${err.message}`);
     }
   };
 
@@ -86,6 +90,10 @@ export const CircuitCard: React.FC<CircuitCardProps> = ({ circuit, onMutated }) 
           )}
         </div>
       </div>
+
+      {actionError && (
+        <p className="inline-error" role="alert">{actionError}</p>
+      )}
 
       {/* Countdown timer if OPEN */}
       {state === 'OPEN' && metrics.timeUntilResetMs !== null && (
