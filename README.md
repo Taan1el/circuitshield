@@ -135,7 +135,7 @@ circuitshield/
   server/                 Express API
     src/app.ts            Express app: CORS, JSON body parsing, API mount, static client build
     src/controllers/      Request validation and response shaping
-    src/routes/            Route table
+    src/routes/           Route table
   shared/                 Circuit breaker, bulkhead and service logic used by both server and client
   docs/adr/               Architecture decision records
   docs/screenshots/       README screenshots
