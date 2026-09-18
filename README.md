@@ -17,9 +17,9 @@ runs against simulated in-process calls instead of a real API, so it works with 
 
 ## Screenshot
 
-![Console showing three protected circuits, live telemetry and the chaos generator](docs/screenshots/01-dashboard.png)
+![Console showing the circuits table, live telemetry strip and the chaos and burst test form](docs/screenshots/01-dashboard.png)
 
-More screenshots: [chaos and burst generator](docs/screenshots/02-chaos-simulator.png), [a tripped circuit cooling down](docs/screenshots/03-circuit-tripped.png).
+More screenshots: [chaos and burst test with a populated result](docs/screenshots/02-chaos-simulator.png), [a tripped circuit expanded to show its sliding window and meters](docs/screenshots/03-circuit-tripped.png), [the console on a phone-sized viewport](docs/screenshots/04-mobile.png).
 
 ## Features
 
@@ -130,7 +130,7 @@ graph TD
 ```
 circuitshield/
   client/                 React 19 + Vite console
-    src/components/       Header, StatsBar, CircuitCard, ChaosSimulator, DemoBanner
+    src/components/       Header, StatsBar, CircuitsTable, ChaosSimulator, DemoBanner
     src/services/         api.ts (real), demoApi.ts (browser), index.ts (the switch)
   server/                 Express API
     src/app.ts            Express app: CORS, JSON body parsing, API mount, static client build

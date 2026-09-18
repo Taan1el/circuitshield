@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+- Redesigned the console: a light paper theme with one burnt-orange accent color, replacing the dark navy theme and its neon accent colors.
+- Replaced every emoji icon and status dot with Lucide icons or a plain status dot in mono text.
+- Self-hosted the Sora, Geist and Geist Mono fonts instead of the system font stack, with numbers, ids and durations set in mono everywhere.
+- Removed all gradients and drop shadows from the logo, brand name, stat cards, buttons and gauge fills.
+- Replaced the row of five identical stat cards with a single stats strip (total calls, passed, fast-failed, bulkhead rejections, fallbacks served).
+- Rebuilt the circuit list as a table (circuit, state, failure rate, concurrency, actions) with an expandable row for the sliding window, gauges and fallback response, instead of a grid of identical cards.
+- Rebuilt the chaos simulator as a narrow form column with its burst result beside it, instead of a full-width card with the result stacked below.
+- Redrew the failure-rate and bulkhead gauges as flat meters on a plain track, with the value printed in mono next to the bar.
+- Resized every button, input, select and table row so no control is shorter than 44px.
+- Rewrote the UI copy in plain terms ("Send 25 requests", "Trip circuit", "Chaos and burst test") and removed the unmeasured "(<1ms)" claim on the fast-failed stat.
+
 ## [1.0.0] - 2026-09-15
 
 ### Added
