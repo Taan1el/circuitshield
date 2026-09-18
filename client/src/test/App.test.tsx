@@ -109,19 +109,19 @@ describe('CircuitShield Operations Console', () => {
     });
   });
 
-  it('renders branding and open circuits warning banner', async () => {
+  it('renders branding and an open circuits status line', async () => {
     render(<App />);
 
     expect(screen.getAllByText('CircuitShield').length).toBeGreaterThanOrEqual(1);
 
     await waitFor(() => {
-      expect(screen.getByText(/1 Circuit OPEN/i)).toBeInTheDocument();
+      expect(screen.getByText(/1 circuit open/i)).toBeInTheDocument();
       expect(screen.getByText('1,450')).toBeInTheDocument();
       expect(screen.getByText('220')).toBeInTheDocument();
     });
   });
 
-  it('renders circuit cards with state indicators and sliding window', async () => {
+  it('renders circuit rows with state indicators and sliding window', async () => {
     render(<App />);
 
     await waitFor(() => {
@@ -129,26 +129,26 @@ describe('CircuitShield Operations Console', () => {
       expect(screen.getByText('Tallinn Warehouse Stock Verification')).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/OPEN \(Tripped\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/CLOSED/i)).toBeInTheDocument();
+    expect(screen.getByText('Open')).toBeInTheDocument();
+    expect(screen.getByText('Closed')).toBeInTheDocument();
   });
 
-  it('renders chaos injection and burst traffic generator', async () => {
+  it('renders the chaos and burst test controls', async () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Downstream Dependency Chaos & Burst Generator/i)).toBeInTheDocument();
+      expect(screen.getByText(/Chaos and burst test/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/Fire 25 Concurrent Requests/i)).toBeInTheDocument();
+    expect(screen.getByText(/Send 25 requests/i)).toBeInTheDocument();
   });
 
-  it('displays bulkhead concurrency metrics on cards', async () => {
+  it('displays bulkhead concurrency metrics on each circuit row', async () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText('0 / 4 active')).toBeInTheDocument();
-      expect(screen.getByText('1 / 6 active')).toBeInTheDocument();
+      expect(screen.getByText('0 / 4')).toBeInTheDocument();
+      expect(screen.getByText('1 / 6')).toBeInTheDocument();
     });
   });
 
@@ -156,13 +156,13 @@ describe('CircuitShield Operations Console', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Downstream Dependency Chaos & Burst Generator/i)).toBeInTheDocument();
+      expect(screen.getByText(/Chaos and burst test/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByLabelText(/Target Service Circuit/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Simulated Latency/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Simulated Failure Rate/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Burst Concurrency/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Target circuit/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Latency/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Failure rate/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Concurrency/i)).toBeInTheDocument();
   });
 
   it('shows an inline, accessible error instead of a native alert when a call fails', async () => {
@@ -186,7 +186,7 @@ describe('CircuitShield Operations Console', () => {
 
     render(<App />);
 
-    const executeButtons = await screen.findAllByRole('button', { name: /Test 1 Call/i });
+    const executeButtons = await screen.findAllByRole('button', { name: /Test call/i });
     fireEvent.click(executeButtons[0]);
 
     await waitFor(() => {
