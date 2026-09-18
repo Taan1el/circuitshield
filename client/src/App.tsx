@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { TriangleAlert } from 'lucide-react';
 import type { GlobalStats, CircuitBreakerInfo } from '../../shared/types.js';
 import { fetchStats, fetchCircuits } from './services/index.js';
 import { Header } from './components/Header.js';
 import { StatsBar } from './components/StatsBar.js';
-import { CircuitCard } from './components/CircuitCard.js';
+import { CircuitsTable } from './components/CircuitsTable.js';
 import { ChaosSimulator } from './components/ChaosSimulator.js';
 import { DemoBanner } from './components/DemoBanner.js';
+import { formatCount } from './utils/pluralize.js';
 import './App.css';
 
 export const App: React.FC = () => {
@@ -54,9 +56,11 @@ export const App: React.FC = () => {
 
       <main className="app-main">
         {error && (
-          <div className="alert alert-error global-alert" role="alert">
-            <span>⚠️ {error}</span>
-            <button className="btn btn-secondary btn-xs" onClick={() => loadData(true)}>
+          <div className="alert alert-error" role="alert">
+            <span className="alert-message">
+              <TriangleAlert size={16} aria-hidden="true" /> {error}
+            </span>
+            <button className="btn btn-secondary" onClick={() => loadData(true)}>
               Retry
             </button>
           </div>
@@ -66,36 +70,23 @@ export const App: React.FC = () => {
 
         <ChaosSimulator onMutated={() => loadData(false)} />
 
-        <div className="circuits-section">
-          <div className="section-title-row">
-            <h2 className="section-heading">Protected Routes ({circuits.length})</h2>
-            <span className="section-sub">
-              Each circuit tracks its own error rate and slow-call rate over a sliding window of recent calls.
-            </span>
-          </div>
-
-          <div className="circuits-grid">
-            {circuits.map((circuit) => (
-              <CircuitCard
-                key={circuit.id}
-                circuit={circuit}
-                onMutated={() => loadData(false)}
-              />
-            ))}
-          </div>
-        </div>
+        <section aria-labelledby="circuits-heading">
+          <h2 id="circuits-heading" className="section-heading">
+            {formatCount(circuits.length, 'circuit')}
+          </h2>
+          <p className="section-description">
+            Each circuit tracks its own failure and slow-call rate over a sliding window of recent calls.
+          </p>
+          <CircuitsTable circuits={circuits} onMutated={() => loadData(false)} />
+        </section>
       </main>
 
       <footer className="app-footer">
-        <div>
-          <strong>CircuitShield</strong> &bull; Circuit Breaker &amp; Bulkhead Gateway
-        </div>
+        <div><strong>CircuitShield</strong> &bull; MIT License</div>
         <div className="footer-links">
-          <span>Inspired by Hystrix / Resilience4j</span>
-          <span>&bull;</span>
-          <span>Sliding-Window Failure Detector</span>
-          <span>&bull;</span>
-          <span>In-Process Fail-Fast</span>
+          <a href="https://github.com/Taan1el/circuitshield" target="_blank" rel="noreferrer">
+            Source on GitHub
+          </a>
         </div>
       </footer>
     </div>

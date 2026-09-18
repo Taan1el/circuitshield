@@ -16,18 +16,18 @@ export const DemoBanner: React.FC<DemoBannerProps> = ({ onReset }) => {
   };
 
   return (
-    <div className="demo-banner" role="status">
-      <span>
-        Demo mode: this runs entirely in your browser using the same circuit breaker and bulkhead code as
-        the server, with no backend and no data leaving your device.{' '}
-        <a href="https://github.com/Taan1el/circuitshield" target="_blank" rel="noreferrer">
-          View source on GitHub
-        </a>{' '}
-        to run the full stack.
-      </span>
-      <button type="button" className="btn btn-secondary btn-xs" onClick={handleReset}>
-        Reset demo data
-      </button>
+    <div className="demo-bar" role="status">
+      <div className="demo-bar-inner">
+        <span>Demo: everything runs in your browser with sample data.</span>
+        <span className="demo-bar-links">
+          <button type="button" className="link-btn" onClick={handleReset}>
+            Reset sample data
+          </button>
+          <a href="https://github.com/Taan1el/circuitshield" target="_blank" rel="noreferrer">
+            Source on GitHub
+          </a>
+        </span>
+      </div>
     </div>
   );
 };

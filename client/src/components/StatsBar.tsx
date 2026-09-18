@@ -7,7 +7,7 @@ interface StatsBarProps {
 
 export const StatsBar: React.FC<StatsBarProps> = ({ stats }) => {
   if (!stats) {
-    return <div className="stats-bar-skeleton">Loading resilience telemetry...</div>;
+    return <div className="stats-strip-loading">Loading telemetry.</div>;
   }
 
   const fastFailPercent = stats.totalCalls > 0
@@ -15,50 +15,31 @@ export const StatsBar: React.FC<StatsBarProps> = ({ stats }) => {
     : '0.0';
 
   return (
-    <div className="stats-bar-grid">
-      <div className="stat-card">
-        <div className="stat-header">
-          <span className="stat-label">Total Calls</span>
-          <span className="stat-icon">📊</span>
-        </div>
-        <div className="stat-value">{stats.totalCalls.toLocaleString()}</div>
-        <div className="stat-subtext">Requests evaluated by gateway</div>
+    <div className="stats-strip">
+      <div className="stat-cell">
+        <span className="stat-label">Total calls</span>
+        <span className="stat-value">{stats.totalCalls.toLocaleString()}</span>
       </div>
 
-      <div className="stat-card stat-passed">
-        <div className="stat-header">
-          <span className="stat-label">Passed Calls</span>
-          <span className="stat-icon">✅</span>
-        </div>
-        <div className="stat-value text-emerald">{stats.passedCalls.toLocaleString()}</div>
-        <div className="stat-subtext">Normal &amp; healthy executions</div>
+      <div className="stat-cell">
+        <span className="stat-label">Passed</span>
+        <span className="stat-value">{stats.passedCalls.toLocaleString()}</span>
       </div>
 
-      <div className="stat-card stat-fast-fail">
-        <div className="stat-header">
-          <span className="stat-label">Short-Circuited Fast Fails</span>
-          <span className="stat-icon">⚡</span>
-        </div>
-        <div className="stat-value text-rose">{stats.shortCircuitedCalls.toLocaleString()}</div>
-        <div className="stat-subtext">{fastFailPercent}% calls spared network I/O (&lt;1ms)</div>
+      <div className="stat-cell">
+        <span className="stat-label">Fast-failed</span>
+        <span className="stat-value">{stats.shortCircuitedCalls.toLocaleString()}</span>
+        <span className="stat-note">{fastFailPercent}% of calls</span>
       </div>
 
-      <div className="stat-card">
-        <div className="stat-header">
-          <span className="stat-label">Bulkhead Rejections</span>
-          <span className="stat-icon">🛡️</span>
-        </div>
-        <div className="stat-value text-amber">{stats.bulkheadRejections.toLocaleString()}</div>
-        <div className="stat-subtext">Concurrency saturation rejections</div>
+      <div className="stat-cell">
+        <span className="stat-label">Bulkhead rejections</span>
+        <span className="stat-value">{stats.bulkheadRejections.toLocaleString()}</span>
       </div>
 
-      <div className="stat-card stat-fallbacks">
-        <div className="stat-header">
-          <span className="stat-label">Fallbacks Served</span>
-          <span className="stat-icon">📦</span>
-        </div>
-        <div className="stat-value text-purple">{stats.fallbacksServed.toLocaleString()}</div>
-        <div className="stat-subtext">Gracefully degraded responses</div>
+      <div className="stat-cell">
+        <span className="stat-label">Fallbacks served</span>
+        <span className="stat-value">{stats.fallbacksServed.toLocaleString()}</span>
       </div>
     </div>
   );

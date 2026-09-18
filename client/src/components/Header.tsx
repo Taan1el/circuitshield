@@ -1,4 +1,6 @@
 import React from 'react';
+import { RefreshCw } from 'lucide-react';
+import { pluralize } from '../utils/pluralize.js';
 
 interface HeaderProps {
   totalCircuits: number;
@@ -7,52 +9,39 @@ interface HeaderProps {
   isLoading: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  totalCircuits,
-  openCount,
-  onRefresh,
-  isLoading,
-}) => {
+export const Header: React.FC<HeaderProps> = ({ totalCircuits, openCount, onRefresh, isLoading }) => {
   return (
     <header className="app-header">
-      <div className="header-brand">
-        <div className="brand-logo">
-          <span className="brand-icon">🛡️</span>
-          <div className="pulse-ring"></div>
-        </div>
-        <div className="brand-titles">
-          <div className="brand-row">
-            <h1 className="brand-name">CircuitShield</h1>
-            <span className="badge badge-version">v1.0</span>
-            {openCount > 0 ? (
-              <span className="badge badge-danger blink">
-                ⚠️ {openCount} Circuit{openCount > 1 ? 's' : ''} OPEN
-              </span>
-            ) : (
-              <span className="badge badge-success">
-                ✓ All Systems Protected
-              </span>
-            )}
-          </div>
+      <div className="header-inner">
+        <div>
+          <h1 className="brand-name">CircuitShield</h1>
           <p className="brand-subtitle">
-            Circuit Breaker Gateway, Bulkhead Isolation &amp; Adaptive Fault Tolerance
+            Circuit breaker and bulkhead gateway that trips a failing route, isolates its concurrency, and
+            heals it back once the downstream call recovers.
           </p>
+          <div className="header-meta">
+            <span className="badge">v1.0</span>
+            <span className="status-line">
+              <span className={`status-dot ${openCount > 0 ? 'bad' : 'ok'}`}></span>
+              {openCount > 0 ? `${openCount} ${pluralize(openCount, 'circuit')} open` : 'All circuits closed'}
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div className="header-actions">
-        <div className="live-pill">
-          <span className={`live-dot ${openCount > 0 ? 'dot-open' : 'dot-closed'}`}></span>
-          <span>{totalCircuits} Circuits Monitored</span>
+        <div className="header-actions">
+          <span className="key-count">
+            <strong>{totalCircuits}</strong> {pluralize(totalCircuits, 'circuit')} monitored
+          </span>
+          <button
+            className="btn btn-secondary"
+            onClick={onRefresh}
+            disabled={isLoading}
+            title="Manual refresh"
+          >
+            <RefreshCw size={16} aria-hidden="true" />
+            {isLoading ? 'Refreshing' : 'Refresh'}
+          </button>
         </div>
-        <button
-          className="btn btn-secondary btn-sm"
-          onClick={onRefresh}
-          disabled={isLoading}
-          title="Manual refresh"
-        >
-          {isLoading ? 'Polling...' : '↻ Refresh'}
-        </button>
       </div>
     </header>
   );

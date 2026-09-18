@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import type { BurstTestResult } from '../../../shared/types.js';
 import { runBurstTest, updateServiceChaos } from '../services/index.js';
+import { STATE_DOT, STATE_LABEL } from '../utils/circuitState.js';
+
+const CIRCUIT_OPTIONS = [
+  { value: 'payments', label: 'Payments' },
+  { value: 'inventory', label: 'Inventory' },
+  { value: 'fraud-detection', label: 'Fraud detection' },
+];
 
 interface ChaosSimulatorProps {
   onMutated: () => void;
@@ -23,7 +30,7 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
     setErrorMsg(null);
     try {
       await updateServiceChaos(selectedCircuit, latencyMs, errorRate);
-      setStatusMsg(`Chaos profile applied to ${selectedCircuit}: ${latencyMs}ms, ${errorRate}% errors`);
+      setStatusMsg(`Applied to ${selectedCircuit}: ${latencyMs}ms latency, ${errorRate}% errors.`);
       onMutated();
     } catch (err: any) {
       setErrorMsg(`Failed to apply chaos profile: ${err.message}`);
@@ -53,36 +60,33 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
   };
 
   return (
-    <div className="chaos-simulator-card">
-      <div className="card-header">
-        <span className="section-badge badge-red">Chaos Injection &amp; Stress Test</span>
-        <h2 className="card-title">Downstream Dependency Chaos &amp; Burst Generator</h2>
-        <p className="card-subtitle">
-          Dial in simulated latency and an error rate for a circuit's downstream call, then fire a concurrent
-          burst and watch it trip, fail fast, and fall back to its configured response.
-        </p>
-      </div>
+    <section className="chaos-section" aria-labelledby="chaos-heading">
+      <div className="chaos-form">
+        <div>
+          <h2 id="chaos-heading" className="section-heading">Chaos and burst test</h2>
+          <p className="section-description">
+            Set a downstream latency and failure rate, then send a concurrent burst through the circuit.
+          </p>
+        </div>
 
-      <div className="sim-controls-grid">
-        <div className="sim-group">
-          <label className="form-label" htmlFor="chaos-target-circuit">Target Service Circuit</label>
+        <div className="field">
+          <label className="field-label" htmlFor="chaos-target-circuit">Target circuit</label>
           <select
             id="chaos-target-circuit"
-            className="form-select"
             value={selectedCircuit}
             onChange={(e) => setSelectedCircuit(e.target.value)}
             disabled={isRunningBurst}
           >
-            <option value="payments">Stripe / Adyen Payments (payments)</option>
-            <option value="inventory">Warehouse Inventory (inventory)</option>
-            <option value="fraud-detection">AI Risk &amp; Fraud (fraud-detection)</option>
+            {CIRCUIT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
           </select>
         </div>
 
-        <div className="sim-group">
-          <div className="slider-label-row">
-            <label className="form-label" htmlFor="chaos-latency">Simulated Latency</label>
-            <span className="slider-val">{latencyMs} ms</span>
+        <div className="field">
+          <div className="field-row">
+            <label className="field-label" htmlFor="chaos-latency">Latency</label>
+            <span className="field-value">{latencyMs} ms</span>
           </div>
           <input
             id="chaos-latency"
@@ -92,16 +96,15 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
             step="20"
             value={latencyMs}
             onChange={(e) => setLatencyMs(Number(e.target.value))}
-            className="slider-range"
             disabled={isRunningBurst}
             aria-valuetext={`${latencyMs} milliseconds`}
           />
         </div>
 
-        <div className="sim-group">
-          <div className="slider-label-row">
-            <label className="form-label" htmlFor="chaos-error-rate">Simulated Failure Rate</label>
-            <span className="slider-val text-rose">{errorRate}%</span>
+        <div className="field">
+          <div className="field-row">
+            <label className="field-label" htmlFor="chaos-error-rate">Failure rate</label>
+            <span className="field-value">{errorRate}%</span>
           </div>
           <input
             id="chaos-error-rate"
@@ -111,16 +114,15 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
             step="5"
             value={errorRate}
             onChange={(e) => setErrorRate(Number(e.target.value))}
-            className="slider-range"
             disabled={isRunningBurst}
             aria-valuetext={`${errorRate} percent`}
           />
         </div>
 
-        <div className="sim-group">
-          <div className="slider-label-row">
-            <label className="form-label" htmlFor="chaos-concurrency">Burst Concurrency</label>
-            <span className="slider-val text-cyan">{concurrency} reqs</span>
+        <div className="field">
+          <div className="field-row">
+            <label className="field-label" htmlFor="chaos-concurrency">Concurrency</label>
+            <span className="field-value">{concurrency} requests</span>
           </div>
           <input
             id="chaos-concurrency"
@@ -130,82 +132,84 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
             step="5"
             value={concurrency}
             onChange={(e) => setConcurrency(Number(e.target.value))}
-            className="slider-range"
             disabled={isRunningBurst}
             aria-valuetext={`${concurrency} requests`}
           />
         </div>
-      </div>
 
-      {errorMsg && (
-        <p className="inline-error" role="alert">{errorMsg}</p>
-      )}
+        {errorMsg && <p className="inline-error" role="alert">{errorMsg}</p>}
 
-      <div className="sim-action-row">
-        <button
-          type="button"
-          className="btn btn-secondary btn-md"
-          onClick={handleApplyChaos}
-          disabled={isApplying || isRunningBurst}
-        >
-          {isApplying ? 'Applying...' : 'Apply Downstream Chaos'}
-        </button>
+        <div className="chaos-actions">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleApplyChaos}
+            disabled={isApplying || isRunningBurst}
+          >
+            {isApplying ? 'Applying' : 'Apply chaos'}
+          </button>
 
-        <button
-          type="button"
-          className="btn btn-primary btn-md"
-          onClick={handleRunBurst}
-          disabled={isRunningBurst}
-        >
-          {isRunningBurst ? (
-            <>
-              <span className="spinner"></span> Firing {concurrency} Requests...
-            </>
-          ) : (
-            <>🚀 Fire {concurrency} Concurrent Requests</>
-          )}
-        </button>
-
-        {statusMsg && <span className="status-note">{statusMsg}</span>}
-      </div>
-
-      {burstResult && (
-        <div className="burst-results-box">
-          <div className="burst-results-header">
-            <h3>Burst Summary for <code>{burstResult.circuitId}</code></h3>
-            <span className={`state-badge state-${burstResult.finalCircuitState.toLowerCase()}`}>
-              Final State: {burstResult.finalCircuitState}
-            </span>
-          </div>
-
-          <div className="burst-metrics-grid">
-            <div className="burst-stat">
-              <span className="b-label">Total Requests</span>
-              <span className="b-val">{burstResult.totalRequests}</span>
-            </div>
-            <div className="burst-stat">
-              <span className="b-label">Successes</span>
-              <span className="b-val text-emerald">{burstResult.successes}</span>
-            </div>
-            <div className="burst-stat">
-              <span className="b-label">Downstream Failures</span>
-              <span className="b-val text-rose">{burstResult.failures}</span>
-            </div>
-            <div className="burst-stat">
-              <span className="b-label">Short-Circuits (&lt;1ms)</span>
-              <span className="b-val text-amber">{burstResult.shortCircuits}</span>
-            </div>
-            <div className="burst-stat">
-              <span className="b-label">Bulkhead Rejections</span>
-              <span className="b-val text-purple">{burstResult.bulkheadRejections}</span>
-            </div>
-            <div className="burst-stat">
-              <span className="b-label">Avg Duration</span>
-              <span className="b-val">{burstResult.avgLatencyMs} ms</span>
-            </div>
-          </div>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleRunBurst}
+            disabled={isRunningBurst}
+          >
+            {isRunningBurst ? (
+              <>
+                <span className="spinner"></span> Sending
+              </>
+            ) : (
+              `Send ${concurrency} requests`
+            )}
+          </button>
         </div>
-      )}
-    </div>
+
+        {statusMsg && <p className="status-note">{statusMsg}</p>}
+      </div>
+
+      <div className="chaos-results">
+        <h3 className="panel-heading">Burst result</h3>
+        {burstResult ? (
+          <div>
+            <div className="result-top">
+              <span className="mono">{burstResult.circuitId}</span>
+              <span className="status-line">
+                <span className={`status-dot ${STATE_DOT[burstResult.finalCircuitState]}`}></span>
+                {STATE_LABEL[burstResult.finalCircuitState]}
+              </span>
+            </div>
+            <dl className="result-list">
+              <div className="result-row">
+                <dt>Requests</dt>
+                <dd className="mono">{burstResult.totalRequests}</dd>
+              </div>
+              <div className="result-row">
+                <dt>Successes</dt>
+                <dd className="mono">{burstResult.successes}</dd>
+              </div>
+              <div className="result-row">
+                <dt>Failures</dt>
+                <dd className="mono">{burstResult.failures}</dd>
+              </div>
+              <div className="result-row">
+                <dt>Fast-failed</dt>
+                <dd className="mono">{burstResult.shortCircuits}</dd>
+              </div>
+              <div className="result-row">
+                <dt>Bulkhead rejections</dt>
+                <dd className="mono">{burstResult.bulkheadRejections}</dd>
+              </div>
+              <div className="result-row">
+                <dt>Average duration</dt>
+                <dd className="mono">{burstResult.avgLatencyMs} ms</dd>
+              </div>
+            </dl>
+          </div>
+        ) : (
+          <p className="empty-note">Send a burst to see results here.</p>
+        )}
+      </div>
+    </section>
   );
 };
