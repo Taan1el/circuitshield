@@ -60,14 +60,16 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
   };
 
   return (
-    <section className="chaos-section" aria-labelledby="chaos-heading">
+    <section className="chaos-panel" aria-labelledby="chaos-heading">
+      <div className="chaos-head">
+        <h2 id="chaos-heading" className="section-heading">Chaos and burst test</h2>
+        <p className="section-description">
+          Set a downstream latency and failure rate, then send a concurrent burst through the circuit.
+        </p>
+      </div>
+
       <div className="chaos-form">
-        <div>
-          <h2 id="chaos-heading" className="section-heading">Chaos and burst test</h2>
-          <p className="section-description">
-            Set a downstream latency and failure rate, then send a concurrent burst through the circuit.
-          </p>
-        </div>
+        <div className="chaos-fields">
 
         <div className="field">
           <label className="field-label" htmlFor="chaos-target-circuit">Target circuit</label>
@@ -135,6 +137,8 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
             disabled={isRunningBurst}
             aria-valuetext={`${concurrency} requests`}
           />
+        </div>
+
         </div>
 
         {errorMsg && <p className="inline-error" role="alert">{errorMsg}</p>}

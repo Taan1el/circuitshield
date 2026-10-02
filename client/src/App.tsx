@@ -52,7 +52,9 @@ export const App: React.FC = () => {
         openCount={openCircuits}
         onRefresh={() => loadData(true)}
         isLoading={isLoading}
-      />
+      >
+        <StatsBar stats={stats} />
+      </Header>
 
       <main className="app-main">
         {error && (
@@ -66,10 +68,6 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        <StatsBar stats={stats} />
-
-        <ChaosSimulator onMutated={() => loadData(false)} />
-
         <section aria-labelledby="circuits-heading">
           <h2 id="circuits-heading" className="section-heading">
             {formatCount(circuits.length, 'circuit')}
@@ -79,10 +77,12 @@ export const App: React.FC = () => {
           </p>
           <CircuitsTable circuits={circuits} onMutated={() => loadData(false)} />
         </section>
+
+        <ChaosSimulator onMutated={() => loadData(false)} />
       </main>
 
       <footer className="app-footer">
-        <div><strong>CircuitShield</strong> &bull; MIT License</div>
+        <div><strong>CircuitShield</strong> / MIT License</div>
         <div className="footer-links">
           <a href="https://github.com/Taan1el/circuitshield" target="_blank" rel="noreferrer">
             Source on GitHub

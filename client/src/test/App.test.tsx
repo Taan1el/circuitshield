@@ -129,8 +129,8 @@ describe('CircuitShield Operations Console', () => {
       expect(screen.getByText('Tallinn Warehouse Stock Verification')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Open')).toBeInTheDocument();
-    expect(screen.getByText('Closed')).toBeInTheDocument();
+    expect(screen.getByText('OPEN')).toBeInTheDocument();
+    expect(screen.getByText('CLOSED')).toBeInTheDocument();
   });
 
   it('renders the chaos and burst test controls', async () => {

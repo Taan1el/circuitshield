@@ -1,20 +1,19 @@
 :root {
-  --paper: #faf9f6;        /* page background */
-  --surface: #ffffff;      /* panels, tables */
-  --ink: #17160f;          /* primary text */
-  --ink-2: #57544b;        /* secondary text */
-  --ink-3: #8a867b;        /* tertiary text, placeholders */
-  --rule: #e3e0d7;         /* borders and dividers */
-  --rule-strong: #cfcabd;  /* input borders, table header rule */
-  --accent: #b54708;       /* circuitshield: breaker, warning plate */
-  --accent-ink: #ffffff;   /* text on accent fills */
-  --accent-soft: color-mix(in srgb, var(--accent) 10%, var(--surface));
-  /* status colors are data, not decoration: use only for status text, dots, small badges and meter fills */
-  --ok: #1f7a4d;
-  --warn: #a15c00;
+  --paper: #e9e6df;        /* warm concrete page */
+  --surface: #f6f4ef;      /* panel faces */
+  --ink: #1c1a17;          /* text and every border */
+  --ink-2: #47433c;        /* secondary text */
+  --ink-3: #625d54;        /* tertiary text */
+  --rule: #cfc9bd;         /* track fill for meters */
+  --rule-strong: #1c1a17;
+  --accent: #b54708;       /* breaker handle orange */
+  --accent-ink: #ffffff;
+  --ok: #1c6b43;
+  --warn: #8a5000;
   --bad: #b3261e;
-  --radius: 6px;
-  --font-heading: "Sora Variable", "Sora", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Geist Variable", "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono Variable", "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+  --radius: 0;
+  --border: 2px solid var(--ink);
+  --font-heading: "Archivo Variable", "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Work Sans Variable", "Work Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Martian Mono Variable", "Martian Mono", ui-monospace, "SFMono-Regular", monospace;
 }

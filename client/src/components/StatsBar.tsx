@@ -7,40 +7,32 @@ interface StatsBarProps {
 
 export const StatsBar: React.FC<StatsBarProps> = ({ stats }) => {
   if (!stats) {
-    return <div className="stats-strip-loading">Loading telemetry.</div>;
+    return <p className="tally-loading">Loading telemetry.</p>;
   }
 
   const fastFailPercent = stats.totalCalls > 0
     ? ((stats.shortCircuitedCalls / stats.totalCalls) * 100).toFixed(1)
     : '0.0';
 
+  const rows: Array<[string, number, string?]> = [
+    ['Total calls', stats.totalCalls],
+    ['Passed', stats.passedCalls],
+    ['Fast-failed', stats.shortCircuitedCalls, `${fastFailPercent}% of calls`],
+    ['Bulkhead rejections', stats.bulkheadRejections],
+    ['Fallbacks served', stats.fallbacksServed],
+  ];
+
   return (
-    <div className="stats-strip">
-      <div className="stat-cell">
-        <span className="stat-label">Total calls</span>
-        <span className="stat-value">{stats.totalCalls.toLocaleString()}</span>
-      </div>
-
-      <div className="stat-cell">
-        <span className="stat-label">Passed</span>
-        <span className="stat-value">{stats.passedCalls.toLocaleString()}</span>
-      </div>
-
-      <div className="stat-cell">
-        <span className="stat-label">Fast-failed</span>
-        <span className="stat-value">{stats.shortCircuitedCalls.toLocaleString()}</span>
-        <span className="stat-note">{fastFailPercent}% of calls</span>
-      </div>
-
-      <div className="stat-cell">
-        <span className="stat-label">Bulkhead rejections</span>
-        <span className="stat-value">{stats.bulkheadRejections.toLocaleString()}</span>
-      </div>
-
-      <div className="stat-cell">
-        <span className="stat-label">Fallbacks served</span>
-        <span className="stat-value">{stats.fallbacksServed.toLocaleString()}</span>
-      </div>
-    </div>
+    <dl className="tally">
+      {rows.map(([label, value, note]) => (
+        <div className="tally-row" key={label}>
+          <dt>{label}</dt>
+          <dd>
+            {note && <span className="tally-note">{note}</span>}
+            <span className="tally-value">{value.toLocaleString()}</span>
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 };

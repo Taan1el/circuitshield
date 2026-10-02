@@ -1,12 +1,11 @@
 import type { CircuitState, CallOutcome } from '../../../shared/types.js';
 
-// A single place mapping the breaker's three states to their display text
-// and status-dot color, reused by the circuits table and the burst result
-// panel so both read the same way.
+// A single place mapping the breaker's three states to their plate label
+// and status color, reused by the breaker rows and the burst result panel.
 export const STATE_LABEL: Record<CircuitState, string> = {
-  CLOSED: 'Closed',
-  OPEN: 'Open',
-  HALF_OPEN: 'Half-open',
+  CLOSED: 'CLOSED',
+  OPEN: 'OPEN',
+  HALF_OPEN: 'HALF-OPEN',
 };
 
 export const STATE_DOT: Record<CircuitState, 'ok' | 'warn' | 'bad'> = {

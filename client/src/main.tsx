@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import '@fontsource-variable/sora';
-import '@fontsource-variable/geist';
-import '@fontsource-variable/geist-mono';
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource-variable/work-sans';
+import '@fontsource-variable/martian-mono';
 import './styles/tokens.css';
 import App from './App.js';
 
