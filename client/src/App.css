@@ -316,7 +316,7 @@ section > .section-description {
 
 .breaker-row {
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr) auto;
+  grid-template-columns: 220px minmax(0, 1fr) auto;
   align-items: stretch;
 }
 
@@ -342,8 +342,8 @@ section > .section-description {
 .state-label {
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 1.35rem;
-  letter-spacing: -0.04em;
+  font-size: 1.9rem;
+  letter-spacing: -0.05em;
   line-height: 1.1;
 }
 
@@ -513,7 +513,6 @@ section > .section-description {
 }
 
 .call-short_circuited {
-  background-color: var(--paper);
   color: var(--ink-2);
 }
 
@@ -768,8 +767,7 @@ section > .section-description {
 
 /* Footer */
 .app-footer {
-  padding-block: 1.5rem 2.5rem;
-  border-top: var(--border);
+  padding-block: 0.5rem 2.5rem;
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
@@ -787,6 +785,7 @@ section > .section-description {
 
 .app-footer > div {
   display: flex;
+  gap: 0.4rem;
   align-items: center;
 }
 

@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Changed
+- Gave the console its own look, modeled on a switchgear panel: warm concrete background, heavy square-cornered outlines and no rounded corners. A header plate shows the overall panel state and the call totals, each circuit is a wide breaker row with a large CLOSED, OPEN or HALF-OPEN label on the left, meters in the middle and controls on the right, and the chaos and burst test sits in a panel at the bottom of the page.
+- Switched the fonts to Archivo, Work Sans and Martian Mono, and removed the previous font packages.
 - Redesigned the console: a light paper theme with one burnt-orange accent color, replacing the dark navy theme and its neon accent colors.
 - Replaced every emoji icon and status dot with Lucide icons or a plain status dot in mono text.
 - Self-hosted the Sora, Geist and Geist Mono fonts instead of the system font stack, with numbers, ids and durations set in mono everywhere.

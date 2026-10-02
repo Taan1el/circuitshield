@@ -17,9 +17,9 @@ runs against simulated in-process calls instead of a real API, so it works with 
 
 ## Screenshot
 
-![Console showing the circuits table, live telemetry strip and the chaos and burst test form](docs/screenshots/01-dashboard.png)
+![Switchgear-style console: a header plate with panel state and call totals, one breaker row per circuit with a large state label, and the chaos and burst test panel at the bottom](docs/screenshots/01-dashboard.png)
 
-More screenshots: [chaos and burst test with a populated result](docs/screenshots/02-chaos-simulator.png), [a tripped circuit expanded to show its sliding window and meters](docs/screenshots/03-circuit-tripped.png), [the console on a phone-sized viewport](docs/screenshots/04-mobile.png).
+More screenshots: [chaos and burst test with a populated result](docs/screenshots/02-chaos-simulator.png), [a tripped circuit expanded to show its sliding window and fallback response](docs/screenshots/03-circuit-tripped.png), [the console on a phone-sized viewport](docs/screenshots/04-mobile.png).
 
 ## Features
 
