@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- The fallback response box can scroll sideways, so it is now a labelled region that can be reached and scrolled with the keyboard.
+
 ### Added
+- A test that checks every sideways-scrolling box on the main screens is a focusable, labelled region.
 - Automated accessibility checks for the breaker list, an expanded circuit row and the chaos test panel, run with axe against the WCAG 2 A and AA rules. Color contrast is checked outside the test suite.
 
 ### Changed

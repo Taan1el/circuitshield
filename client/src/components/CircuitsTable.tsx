@@ -204,7 +204,7 @@ export const CircuitsTable: React.FC<CircuitsTableProps> = ({ circuits, onMutate
                     {showFallback ? 'Hide fallback response' : 'Show fallback response'}
                   </button>
                   {showFallback && (
-                    <pre className="value-preview">{JSON.stringify(circuit.fallbackPayload, null, 2)}</pre>
+                    <pre className="value-preview" role="region" tabIndex={0} aria-label={`${circuit.name} fallback response`}>{JSON.stringify(circuit.fallbackPayload, null, 2)}</pre>
                   )}
                 </div>
               </div>
