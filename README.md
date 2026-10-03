@@ -177,6 +177,9 @@ Shapes (`CircuitBreakerInfo`, `CircuitConfig`, `ExecutionResult`, `BurstTestResu
 - **Demo adapter** (`client/src/test/demoApi.test.ts`): the seeded circuits, executing a call, the not-found
   error message matching the real API, config and chaos validation, a burst test, and that resetting the demo
   wipes state back to the starting scenario.
+- **Accessibility** (`client/src/test/a11y.test.tsx`, `vitest-axe`): the suite includes automated accessibility checks
+  (WCAG 2 A and AA rules) on the breaker list, an expanded circuit row and the chaos test panel. Color contrast is
+  checked outside jsdom, since jsdom cannot compute colors.
 
 Run everything with `npm test` (or `npm run test:server` / `npm run test:client` separately).
 
