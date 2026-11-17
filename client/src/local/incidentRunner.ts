@@ -1,5 +1,6 @@
 import type { BreakerSettings } from '../../../shared/breaker-core.js';
 import { replayTimeline, type ReplayResult, type Timeline } from '../../../shared/replay.js';
+import { readFileText } from './files.js';
 import { checkIncidentSize, parseIncidentText, type IncidentParseResult } from './incidentFile.js';
 import type { WorkerRequest, WorkerResponse } from './incident.worker.js';
 
@@ -55,7 +56,7 @@ function ask(request: WorkerRequest): Promise<WorkerResponse> {
 export async function parseIncidentFile(file: File): Promise<IncidentParseResult> {
   const tooBig = checkIncidentSize(file.name, file.size);
   if (tooBig) return { ok: false, problems: [tooBig], truncated: false };
-  const text = await file.text();
+  const text = await readFileText(file);
   if (text.length >= WORKER_TEXT_CHARS) {
     try {
       const response = await ask({ id: nextId++, kind: 'parse', text, fileName: file.name });

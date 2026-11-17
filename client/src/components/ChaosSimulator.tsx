@@ -3,18 +3,22 @@ import type { BurstTestResult } from '../../../shared/types.js';
 import { runBurstTest, updateServiceChaos } from '../services/index.js';
 import { STATE_DOT, STATE_LABEL } from '../utils/circuitState.js';
 
-const CIRCUIT_OPTIONS = [
-  { value: 'payments', label: 'Payments' },
-  { value: 'inventory', label: 'Inventory' },
-  { value: 'fraud-detection', label: 'Fraud detection' },
-];
+// Short names for the three example circuits; any other circuit uses its own name.
+const SHORT_LABELS: Record<string, string> = {
+  payments: 'Payments',
+  inventory: 'Inventory',
+  'fraud-detection': 'Fraud detection',
+};
 
 interface ChaosSimulatorProps {
+  circuits: Array<{ id: string; name: string }>;
   onMutated: () => void;
 }
 
-export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => {
-  const [selectedCircuit, setSelectedCircuit] = useState('payments');
+export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ circuits, onMutated }) => {
+  const [chosenCircuit, setSelectedCircuit] = useState('');
+  // Fall back to the first circuit when nothing is chosen or the chosen one is gone.
+  const selectedCircuit = circuits.some((circuit) => circuit.id === chosenCircuit) ? chosenCircuit : circuits[0]?.id ?? '';
   const [latencyMs, setLatencyMs] = useState(150);
   const [errorRate, setErrorRate] = useState(60);
   const [concurrency, setConcurrency] = useState(25);
@@ -77,10 +81,10 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
             id="chaos-target-circuit"
             value={selectedCircuit}
             onChange={(e) => setSelectedCircuit(e.target.value)}
-            disabled={isRunningBurst}
+            disabled={isRunningBurst || circuits.length === 0}
           >
-            {CIRCUIT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            {circuits.map((circuit) => (
+              <option key={circuit.id} value={circuit.id}>{SHORT_LABELS[circuit.id] ?? circuit.name}</option>
             ))}
           </select>
         </div>
@@ -148,7 +152,7 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
             type="button"
             className="btn btn-secondary"
             onClick={handleApplyChaos}
-            disabled={isApplying || isRunningBurst}
+            disabled={isApplying || isRunningBurst || !selectedCircuit}
           >
             {isApplying ? 'Applying' : 'Apply chaos'}
           </button>
@@ -157,7 +161,7 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({ onMutated }) => 
             type="button"
             className="btn btn-primary"
             onClick={handleRunBurst}
-            disabled={isRunningBurst}
+            disabled={isRunningBurst || !selectedCircuit}
           >
             {isRunningBurst ? (
               <>

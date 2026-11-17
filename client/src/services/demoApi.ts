@@ -13,7 +13,7 @@ import type {
   GlobalStats,
   DownstreamServiceConfig,
 } from '../../../shared/types.js';
-import { CircuitService } from '../../../shared/circuit.service.js';
+import { CircuitService, DEFAULT_CIRCUIT_DEFINITIONS, type CircuitDefinition } from '../../../shared/circuit.service.js';
 import { validateBurstRequest, validateChaosPatch, validateCircuitConfigPatch } from '../../../shared/validation.js';
 
 let service = new CircuitService();
@@ -23,6 +23,13 @@ let service = new CircuitService();
 // way restarting the real server would.
 export function resetDemoData(): void {
   service = new CircuitService();
+}
+
+// Makes the running circuits match a list of definitions, or the three
+// default circuits when given null. Circuits that did not change keep their
+// counters, so editing one circuit does not wipe the others.
+export function setCircuitDefinitions(definitions: CircuitDefinition[] | null): void {
+  service.syncDefinitions(definitions ?? DEFAULT_CIRCUIT_DEFINITIONS);
 }
 
 function notFound(circuitId: string): Error {

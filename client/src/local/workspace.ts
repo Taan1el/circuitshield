@@ -171,11 +171,14 @@ async function writeWorkspaceRecord<T>(data: T | null, options: WriteOptions): P
   });
 }
 
+/** Tells this page's own messages apart from another tab's, since a page also hears what it posts. */
+const PAGE_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+
 function notifyOtherTabs(revision: number, key: string): void {
   if (typeof BroadcastChannel === 'undefined') return;
   try {
     const channel = new BroadcastChannel(CHANNEL_NAME);
-    channel.postMessage({ revision, key });
+    channel.postMessage({ revision, key, source: PAGE_ID });
     channel.close();
   } catch {
     // Other tabs then see the change the next time they read the workspace.
@@ -186,7 +189,10 @@ function notifyOtherTabs(revision: number, key: string): void {
 export function subscribeToOtherTabs(listener: (key: string) => void): () => void {
   if (typeof BroadcastChannel === 'undefined') return () => undefined;
   const channel = new BroadcastChannel(CHANNEL_NAME);
-  channel.onmessage = (event: MessageEvent<{ key?: string }>) => listener(event.data?.key ?? WORKSPACE_KEY);
+  channel.onmessage = (event: MessageEvent<{ key?: string; source?: string }>) => {
+    if (event.data?.source === PAGE_ID) return;
+    listener(event.data?.key ?? WORKSPACE_KEY);
+  };
   return () => channel.close();
 }
 

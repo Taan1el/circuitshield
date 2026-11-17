@@ -20,3 +20,4 @@ export const runBurstTest = impl.runBurstTest;
 // Only meaningful in demo mode; the real API has no equivalent action a
 // browser client can trigger, so the demo banner is the only caller.
 export const resetDemoData = demoApi.resetDemoData;
+export const setCircuitDefinitions = demoApi.setCircuitDefinitions;
