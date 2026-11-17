@@ -1,6 +1,6 @@
 {
   "name": "@circuitshield/server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "CircuitShield Express API: circuit breaker state machine, sliding window and bulkhead isolation",
   "private": true,
   "type": "module",

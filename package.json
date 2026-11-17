@@ -1,6 +1,6 @@
 {
   "name": "circuitshield",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Circuit breaker gateway with bulkhead isolation and a sliding-window failure detector",
   "private": true,
   "type": "module",

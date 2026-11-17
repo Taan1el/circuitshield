@@ -13,7 +13,9 @@ error rates, so you can dial in a failure scenario and watch the breaker react w
 **Live demo:** https://taan1el.github.io/circuitshield/
 
 The demo runs entirely in your browser: the same circuit breaker, bulkhead and service code the server uses
-runs against simulated in-process calls instead of a real API, so it works with no backend.
+runs against simulated in-process calls instead of a real API, so it works with no backend. It can also
+replay a recorded incident through the breaker with your own thresholds, see
+[Use it with your own data](#use-it-with-your-own-data).
 
 ## Screenshot
 
@@ -38,6 +40,58 @@ More screenshots: [chaos and burst test with a populated result](docs/screenshot
   every 2 seconds.
 - **GitHub Pages demo mode**: no backend required; the browser build runs the exact same breaker, bulkhead and
   service classes as the server.
+- **Tune a breaker against an incident**: replay a recorded timeline of calls through the shared breaker with
+  your own thresholds, compare two sets side by side and export the settings (see below).
+- **Your own circuits**: in the browser workspace, circuits you define replace the three examples.
+
+## Use it with your own data
+
+The live site has a second mode next to the sample data. Pick **Your workspace** under Data source, import a
+recorded incident and tune the breaker against it. Nothing needs a server, an account or a key.
+
+**What to import**
+- An incident timeline as CSV with a header row, up to 5 MB. Either one row per call,
+  `timestamp,outcome,latency_ms` (outcome is `ok`, `error` or `timeout`), or one row per interval,
+  `timestamp,requests,errors`. Timestamps are ISO 8601 or epoch milliseconds; a time with no zone is read as UTC.
+  A byte order mark, CRLF line ends and quoted values are fine. Per-interval rows are spread evenly across the
+  interval, with the errors spread evenly among the requests, so the same file always gives the same calls; they
+  carry no latency, so slow call settings have no effect on them.
+- Rows that cannot be read are skipped and listed with their line numbers as long as fewer than half the rows
+  are bad. Otherwise nothing is loaded and the first problems are listed.
+- Limits: 5 MB, 200,000 rows and 500,000 calls. Each message says what to trim.
+- Optionally a workspace file you exported earlier, which holds your circuits and your threshold sets.
+- Three synthetic timelines are built in (a short error burst, a slow degradation, a flapping dependency), so you
+  can try it first. They are also the sample data.
+
+**What you get**
+- A replay of the timeline through the same state machine the server uses (`shared/breaker-core.ts`), with the
+  failure rate, slow call share, slow call duration, minimum calls, window size, open duration and half-open
+  probe count you set. A timeline above 20,000 calls, or a file above about 200 KB, is processed in a web worker so
+  the page stays responsive.
+- When the breaker opened, went half-open and closed, as a chart and a table of state changes with the reason for
+  each, plus a plain summary: calls short-circuited, failed calls that still reached users, healthy calls blocked
+  and time spent open.
+- A second set of thresholds replayed on the same timeline, with the differences written out in words.
+- Your own circuits: name and settings are saved in the workspace and replace the three examples in the console
+  and the chaos test. You can save a threshold set as a circuit from the tuning section.
+- Export of the chosen settings as JSON, and starting configurations for resilience4j (YAML), Polly (C#) and
+  opossum (JavaScript). The comments in each snippet say which settings map exactly and which do not, and options
+  that have no equivalent are left out rather than guessed.
+
+**What stays on your machine**
+- The file is read, replayed and stored in this browser (IndexedDB). Nothing is uploaded; the built page ships a
+  Content-Security-Policy that allows no other host, and an offline service worker, so it works with the server
+  stopped.
+- Settings and circuits are saved as you change them, and a reminder offers a backup file when the workspace
+  differs from the last one you exported. Importing a workspace or a timeline over a saved one asks first and says
+  what it replaces. **Clear workspace** removes everything, including when the saved data cannot be read.
+- A new version is announced with a quiet notice and a Reload button; the page never reloads by itself.
+
+**What this is not**
+- It replays recorded calls through a simulated breaker. It does not sit in front of live traffic, and a recorded
+  call's latency and outcome do not change because the breaker would have blocked it. A call's result is applied
+  at its timestamp, the bulkhead is not replayed, and the library snippets are starting points to check against
+  each library's own documentation.
 
 ## Getting started
 
@@ -86,10 +140,14 @@ Run from the repo root unless noted otherwise.
 ## How it works
 
 `shared/` holds the circuit breaker, bulkhead and service logic used by both the server and the browser demo:
-`circuit-breaker.ts` (the FSM and sliding window), `bulkhead.ts` (the concurrency limiter and wait queue),
-`circuit.service.ts` (the three default circuits and their simulated downstream calls), and `validation.ts`
-(the request validation rules shared by the real API and the demo adapter). None of it touches a Node-only
-API, so the exact same classes run in the browser build.
+`breaker-core.ts` (the state machine and sliding window, with its clock passed in), `circuit-breaker.ts` (the
+live breaker: the core plus the bulkhead, counters and the real downstream call), `bulkhead.ts` (the concurrency
+limiter and wait queue), `circuit.service.ts` (a list of circuits, by default the three examples, and their
+simulated downstream calls), `replay.ts` and `replay-summary.ts` (replaying a recorded timeline through the core,
+and describing the result in words), and `validation.ts` (the request validation rules shared by the real API and
+the demo adapter). None of it touches a Node-only API, so the exact same classes run in the browser build. The
+live breaker and the replay make the same open, half-open and close decisions because both drive `BreakerCore`;
+`server/test/breaker-core.test.ts` runs the same scripted traffic through both and compares them.
 
 ```mermaid
 graph TD
@@ -107,11 +165,15 @@ graph TD
     subgraph Shared["shared/ (plain TypeScript, no Node-only APIs)"]
         CircuitSvc["circuit.service.ts"]
         Breaker["circuit-breaker.ts"]
+        Core["breaker-core.ts"]
+        Replay["replay.ts"]
         Bulk["bulkhead.ts"]
         Valid["validation.ts"]
 
         CircuitSvc --> Breaker
+        Breaker --> Core
         Breaker --> Bulk
+        Replay --> Core
     end
 
     subgraph ServerBox["server/ (Express)"]
@@ -123,6 +185,7 @@ graph TD
     API --> CircuitSvc
     DemoApi --> Valid
     DemoApi --> CircuitSvc
+    UI -->|incident tuning, in a worker| Replay
 ```
 
 ### Project layout
@@ -130,7 +193,9 @@ graph TD
 ```
 circuitshield/
   client/                 React 19 + Vite console
-    src/components/       Header, StatsBar, CircuitsTable, ChaosSimulator, DemoBanner
+    src/components/       Header, StatsBar, CircuitsTable, ChaosSimulator, DemoBanner, IncidentLab,
+                          ReplayChart, ReplayResults, ExportPanel, WorkspaceBar, CircuitManager
+    src/local/            Incident file reader, worker, workspace storage, exports, offline notice
     src/services/         api.ts (real), demoApi.ts (browser), index.ts (the switch)
   server/                 Express API
     src/app.ts            Express app: CORS, JSON body parsing, API mount, static client build
@@ -177,6 +242,12 @@ Shapes (`CircuitBreakerInfo`, `CircuitConfig`, `ExecutionResult`, `BurstTestResu
 - **Demo adapter** (`client/src/test/demoApi.test.ts`): the seeded circuits, executing a call, the not-found
   error message matching the real API, config and chaos validation, a burst test, and that resetting the demo
   wipes state back to the starting scenario.
+- **Incident tuning** (`client/src/test`): parsing (BOM, CRLF, quotes, ISO and epoch times, the per-interval
+  form, bad-row reporting with line numbers, size limits), replay results with exact open, half-open and close
+  times pinned for a hand-checked timeline and for the synthetic error burst, the two-set comparison, the JSON,
+  resilience4j, Polly and opossum exports, the workspace store (revision checks, other tabs, unreadable data) and
+  the screens (import, replace confirmation, focus handling, circuit manager). The server tests run the same
+  scripted traffic through the live breaker and the replay and compare the decisions.
 - **Accessibility** (`client/src/test/a11y.test.tsx`, `vitest-axe`): the suite includes automated accessibility checks
   (WCAG 2 A and AA rules) on the breaker list, an expanded circuit row and the chaos test panel. Color contrast is
   checked outside jsdom, since jsdom cannot compute colors.
@@ -210,8 +281,9 @@ The deploy step is skipped while the repository is private and starts working on
   rather than a value exposed in `CircuitConfig` (see ADR-003).
 - There is no authentication on the API, and CORS is wide open. Anyone who can reach it can execute calls,
   force-trip circuits, or change thresholds. Do not expose this server to the public internet as-is.
-- The GitHub Pages demo keeps its state in memory for the current page load only; reloading the page starts a
-  fresh scenario the same way restarting the server would.
+- On the GitHub Pages build, sample data is kept in memory for the current page load only; reloading starts a
+  fresh scenario the same way restarting the server would. Your workspace is the exception: it is saved in the
+  browser (IndexedDB) and survives a reload.
 - This has not had a security review. Treat it as a demonstration of circuit breaker and bulkhead techniques,
   not as a production gateway in front of real traffic.
 

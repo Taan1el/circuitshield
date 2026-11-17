@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0] - 2026-11-17
+
+### Added
+- Tune a breaker against an incident. Import a timeline as CSV (one row per call, or one row per interval), replay it through the same breaker the server uses with your own thresholds, and see when it opened, went half-open and closed, how many calls were short-circuited, how many failed calls still reached users, how many healthy calls were blocked and how long it spent open, as a chart, a table of state changes and a plain summary.
+- Compare two sets of thresholds on the same timeline, with the differences written out in words.
+- Three synthetic timelines to try it on: a short error burst, a slow degradation and a flapping dependency.
+- Your workspace: circuits you define (name and settings) replace the three examples in the console and the chaos test, and your thresholds and imported timeline are saved in this browser (IndexedDB) with revision checks, handling for other tabs and a readable message plus Clear workspace when saved data cannot be read. Sample data keeps its old behavior and its reset never touches the workspace.
+- Import and export of the workspace as a JSON file with strict checks and messages that name the file, the path and the expected value. Importing a workspace or a timeline over a saved one asks first and says what it replaces.
+- Export of the chosen settings as JSON, and as starting configurations for resilience4j (YAML), Polly (C#) and opossum (JavaScript), with comments that say which settings map exactly and which do not.
+- Files with a few bad rows are read and the bad rows are listed with their line numbers; a file that is mostly bad, too large or in the wrong shape is refused with a specific message. Large files and replays run in a web worker.
+- An offline copy of the Pages build: a Content-Security-Policy that allows no other host, a web app manifest and a service worker. The page is fetched from the network first and the cached copy is used when offline, and a new version is announced with a quiet "A new version is ready." notice and a Reload button.
+- A line that says the data stays in this browser, a backup reminder after changes, and a sentence that says what the tool is not.
+- `shared/breaker-core.ts`, the breaker's state machine and sliding window with its clock passed in, and a server test that drives the live breaker and the replay with the same scripted traffic and compares their decisions.
+- The chaos test lists the circuits that exist instead of a fixed three, and the circuit service can run a given list of circuits.
+
+### Fixed
+- Lowering the sliding window size on a running circuit now applies to the calls it already holds. Before, the window kept its old size until the circuit was reset.
+
 ## [Unreleased]
 
 ### Fixed
