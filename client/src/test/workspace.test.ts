@@ -86,16 +86,25 @@ describe('browser workspace storage', () => {
     await expect(storage.loadWorkspace()).rejects.toThrow(/unsupported format/);
   });
 
-  it('tells other tabs when the workspace is saved, and stops when unsubscribed', async () => {
+  it('tells other tabs when the workspace is saved, but not the tab that saved it, and stops when unsubscribed', async () => {
     const storage = await import('../local/workspace.js');
     const heard = vi.fn();
     const stop = storage.subscribeToOtherTabs(heard);
-    await storage.saveWorkspace({ rows: [1] });
+    // A save from this page is not news to this page.
+    await storage.saveWorkspace({ rows: [0] });
+    // A second copy of the module stands in for another tab: it has its own page id.
+    vi.resetModules();
+    const otherTab = await import('../local/workspace.js');
+    await otherTab.saveWorkspace({ rows: [1] });
     await vi.waitFor(() => expect(heard).toHaveBeenCalledTimes(1));
+    expect(heard).toHaveBeenCalledWith('workspace');
+    await otherTab.saveWorkspace({ big: [] }, { key: otherTab.INCIDENT_KEY });
+    await vi.waitFor(() => expect(heard).toHaveBeenCalledTimes(2));
+    expect(heard).toHaveBeenLastCalledWith('incident');
     stop();
-    await storage.saveWorkspace({ rows: [2] });
+    await otherTab.saveWorkspace({ rows: [2] });
     await new Promise((resolve) => setTimeout(resolve, 30));
-    expect(heard).toHaveBeenCalledTimes(1);
+    expect(heard).toHaveBeenCalledTimes(2);
   });
 
   it('keeps separate records under their own keys, each with its own revision', async () => {

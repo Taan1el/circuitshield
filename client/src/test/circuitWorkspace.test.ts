@@ -155,10 +155,12 @@ describe('workspace state', () => {
 
   it('picks up a change saved by another tab and says so', async () => {
     const store = await import('../local/circuitWorkspace.js');
-    const storage = await import('../local/workspace.js');
     const files = await import('../local/workspaceFile.js');
     await store.initializeWorkspace();
-    await storage.saveWorkspace(
+    // A second copy of the storage module stands in for another tab.
+    vi.resetModules();
+    const otherTab = await import('../local/workspace.js');
+    await otherTab.saveWorkspace(
       { version: 1, data: { circuits: [circuit], tuning: files.defaultTuning() }, backup: null },
       { mode: 'workspace' }
     );
@@ -166,6 +168,17 @@ describe('workspace state', () => {
     expect(store.workspaceState().notice).toMatch(/another tab/i);
     store.dismissNotice();
     expect(store.workspaceState().notice).toBe('');
+    store.stopWorkspaceListening();
+  });
+
+  it('does not show a notice for its own saves', async () => {
+    const store = await import('../local/circuitWorkspace.js');
+    await store.initializeWorkspace();
+    await store.upsertCircuit(circuit);
+    await store.updateTuning((tuning) => ({ ...tuning, a: { ...tuning.a, label: 'Mine' } }));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(store.workspaceState().notice).toBe('');
+    expect(store.activeTuning().a.label).toBe('Mine');
     store.stopWorkspaceListening();
   });
 
