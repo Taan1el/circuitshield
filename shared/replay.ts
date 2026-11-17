@@ -94,7 +94,9 @@ export interface ReplayResult {
   msClosed: number;
   finalState: CircuitState;
   transitions: Transition[];
+  /** Equal time slices covering the timeline, for charting. Every slice but the last is bucketWidthMs long. */
   buckets: ReplayBucket[];
+  bucketWidthMs: number;
 }
 
 export interface ReplayOptions {
@@ -123,6 +125,7 @@ const EMPTY_RESULT = (settings: BreakerSettings): ReplayResult => ({
   finalState: 'CLOSED',
   transitions: [],
   buckets: [],
+  bucketWidthMs: 1,
 });
 
 /**
@@ -266,6 +269,7 @@ export function replayTimeline(timeline: Timeline, settings: BreakerSettings, op
     finalState: state,
     transitions,
     buckets,
+    bucketWidthMs: bucketWidth,
   };
 }
 

@@ -9,94 +9,139 @@ import type {
   GlobalStats,
 } from './types.js';
 
+export interface CircuitDefinition {
+  id: string;
+  name: string;
+  serviceTarget: string;
+  config: Partial<CircuitConfig>;
+  fallbackPayload: Record<string, unknown>;
+  /** Latency of the simulated downstream service before any chaos is applied. */
+  baseLatencyMs?: number;
+}
+
+/** The three example routes the console starts with. */
+export const DEFAULT_CIRCUIT_DEFINITIONS: CircuitDefinition[] = [
+  {
+    id: 'payments',
+    name: 'Stripe / Adyen Payment Gateway',
+    serviceTarget: 'payment-provider-cluster',
+    baseLatencyMs: 60,
+    config: {
+      failureRateThresholdPercent: 50,
+      slowCallRateThresholdPercent: 50,
+      slowCallDurationThresholdMs: 400,
+      minCallsThreshold: 5,
+      slidingWindowSize: 20,
+      resetTimeoutMs: 5000,
+      halfOpenTrialCalls: 3,
+      bulkheadMaxConcurrent: 4,
+      bulkheadMaxWaitMs: 150,
+    },
+    fallbackPayload: {
+      status: 'DEGRADED_OFFLINE_QUEUED',
+      message: 'Payment received and queued in offline reconciliation journal. Ledger will settle once gateway recovers.',
+      settlementDelaySeconds: 60,
+    },
+  },
+  {
+    id: 'inventory',
+    name: 'Tallinn Warehouse Stock Verification',
+    serviceTarget: 'warehouse-erp-grpc',
+    baseLatencyMs: 40,
+    config: {
+      failureRateThresholdPercent: 40,
+      slowCallRateThresholdPercent: 50,
+      slowCallDurationThresholdMs: 300,
+      minCallsThreshold: 5,
+      slidingWindowSize: 20,
+      resetTimeoutMs: 4000,
+      halfOpenTrialCalls: 2,
+      bulkheadMaxConcurrent: 6,
+      bulkheadMaxWaitMs: 200,
+    },
+    fallbackPayload: {
+      status: 'ESTIMATED_AVAILABLE',
+      availableUnits: 250,
+      source: 'local_cached_snapshot',
+      staleWarning: 'Inventory verified via local cache while warehouse API is degraded',
+    },
+  },
+  {
+    id: 'fraud-detection',
+    name: 'AI Real-Time Fraud & AML Scoring',
+    serviceTarget: 'aml-risk-engine-api',
+    baseLatencyMs: 80,
+    config: {
+      failureRateThresholdPercent: 50,
+      slowCallRateThresholdPercent: 50,
+      slowCallDurationThresholdMs: 350,
+      minCallsThreshold: 5,
+      slidingWindowSize: 20,
+      resetTimeoutMs: 4500,
+      halfOpenTrialCalls: 3,
+      bulkheadMaxConcurrent: 5,
+      bulkheadMaxWaitMs: 150,
+    },
+    fallbackPayload: {
+      status: 'ALLOW_WITH_MANUAL_REVIEW',
+      riskScore: 0.15,
+      ruleHit: 'CIRCUIT_BREAKER_FALLBACK',
+      flaggedForAudit: true,
+    },
+  },
+];
+
 export class CircuitService {
   private circuits = new Map<string, CircuitBreaker>();
+  private definitions = new Map<string, CircuitDefinition>();
   private downstreamChaos = new Map<string, DownstreamServiceConfig>();
 
-  constructor() {
-    this.initDefaultCircuits();
+  constructor(definitions: CircuitDefinition[] = DEFAULT_CIRCUIT_DEFINITIONS) {
+    this.syncDefinitions(definitions);
   }
 
-  private initDefaultCircuits(): void {
-    // 1. Payment Gateway Circuit
-    const paymentCircuit = new CircuitBreaker(
-      'payments',
-      'Stripe / Adyen Payment Gateway',
-      'payment-provider-cluster',
-      {
-        failureRateThresholdPercent: 50,
-        slowCallRateThresholdPercent: 50,
-        slowCallDurationThresholdMs: 400,
-        minCallsThreshold: 5,
-        slidingWindowSize: 20,
-        resetTimeoutMs: 5000,
-        halfOpenTrialCalls: 3,
-        bulkheadMaxConcurrent: 4,
-        bulkheadMaxWaitMs: 150,
-      },
-      {
-        status: 'DEGRADED_OFFLINE_QUEUED',
-        message: 'Payment received and queued in offline reconciliation journal. Ledger will settle once gateway recovers.',
-        settlementDelaySeconds: 60,
+  /**
+   * Makes the running circuits match a list of definitions: new ones are
+   * added, missing ones are removed, a changed setting is applied to the
+   * running breaker, and a changed name or target replaces the breaker.
+   * Circuits that did not change keep their counters and window.
+   */
+  public syncDefinitions(definitions: CircuitDefinition[]): void {
+    const wanted = new Set(definitions.map((definition) => definition.id));
+    for (const id of [...this.circuits.keys()]) {
+      if (!wanted.has(id)) {
+        this.circuits.delete(id);
+        this.definitions.delete(id);
+        this.downstreamChaos.delete(id);
       }
-    );
-
-    // 2. Inventory Reservation Circuit
-    const inventoryCircuit = new CircuitBreaker(
-      'inventory',
-      'Tallinn Warehouse Stock Verification',
-      'warehouse-erp-grpc',
-      {
-        failureRateThresholdPercent: 40,
-        slowCallRateThresholdPercent: 50,
-        slowCallDurationThresholdMs: 300,
-        minCallsThreshold: 5,
-        slidingWindowSize: 20,
-        resetTimeoutMs: 4000,
-        halfOpenTrialCalls: 2,
-        bulkheadMaxConcurrent: 6,
-        bulkheadMaxWaitMs: 200,
-      },
-      {
-        status: 'ESTIMATED_AVAILABLE',
-        availableUnits: 250,
-        source: 'local_cached_snapshot',
-        staleWarning: 'Inventory verified via local cache while warehouse API is degraded',
+    }
+    for (const definition of definitions) {
+      const existing = this.definitions.get(definition.id);
+      const circuit = this.circuits.get(definition.id);
+      const identityChanged =
+        !existing ||
+        existing.name !== definition.name ||
+        existing.serviceTarget !== definition.serviceTarget ||
+        JSON.stringify(existing.fallbackPayload) !== JSON.stringify(definition.fallbackPayload);
+      if (identityChanged || !circuit) {
+        this.circuits.set(
+          definition.id,
+          new CircuitBreaker(definition.id, definition.name, definition.serviceTarget, definition.config, definition.fallbackPayload)
+        );
+        this.downstreamChaos.set(definition.id, {
+          serviceId: definition.id,
+          simulatedLatencyMs: definition.baseLatencyMs ?? 50,
+          simulatedErrorRatePercent: 0,
+        });
+      } else if (JSON.stringify(existing.config) !== JSON.stringify(definition.config)) {
+        circuit.updateConfig(definition.config);
       }
-    );
-
-    // 3. Fraud Detection Circuit
-    const fraudCircuit = new CircuitBreaker(
-      'fraud-detection',
-      'AI Real-Time Fraud & AML Scoring',
-      'aml-risk-engine-api',
-      {
-        failureRateThresholdPercent: 50,
-        slowCallRateThresholdPercent: 50,
-        slowCallDurationThresholdMs: 350,
-        minCallsThreshold: 5,
-        slidingWindowSize: 20,
-        resetTimeoutMs: 4500,
-        halfOpenTrialCalls: 3,
-        bulkheadMaxConcurrent: 5,
-        bulkheadMaxWaitMs: 150,
-      },
-      {
-        status: 'ALLOW_WITH_MANUAL_REVIEW',
-        riskScore: 0.15,
-        ruleHit: 'CIRCUIT_BREAKER_FALLBACK',
-        flaggedForAudit: true,
-      }
-    );
-
-    this.circuits.set('payments', paymentCircuit);
-    this.circuits.set('inventory', inventoryCircuit);
-    this.circuits.set('fraud-detection', fraudCircuit);
-
-    // Initial downstream configs (healthy)
-    this.downstreamChaos.set('payments', { serviceId: 'payments', simulatedLatencyMs: 60, simulatedErrorRatePercent: 0 });
-    this.downstreamChaos.set('inventory', { serviceId: 'inventory', simulatedLatencyMs: 40, simulatedErrorRatePercent: 0 });
-    this.downstreamChaos.set('fraud-detection', { serviceId: 'fraud-detection', simulatedLatencyMs: 80, simulatedErrorRatePercent: 0 });
+      this.definitions.set(definition.id, structuredClone(definition));
+    }
+    // Keep the list in the order the definitions give.
+    const ordered = new Map<string, CircuitBreaker>();
+    for (const definition of definitions) ordered.set(definition.id, this.circuits.get(definition.id) as CircuitBreaker);
+    this.circuits = ordered;
   }
 
   public getAllCircuits(): CircuitBreakerInfo[] {

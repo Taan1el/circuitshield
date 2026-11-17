@@ -8,7 +8,7 @@ export function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-interface ConfigFieldRule {
+export interface ConfigFieldRule {
   key: keyof CircuitConfig;
   min: number;
   max: number;
@@ -19,7 +19,7 @@ interface ConfigFieldRule {
 // behavior, not a hardened production config surface); they exist to catch
 // obviously-wrong input (negative durations, NaN, an accidental string)
 // rather than to second-guess a deliberate tuning choice.
-const CONFIG_RULES: ConfigFieldRule[] = [
+export const CONFIG_RULES: ConfigFieldRule[] = [
   { key: 'failureRateThresholdPercent', min: 0, max: 100 },
   { key: 'slowCallRateThresholdPercent', min: 0, max: 100 },
   { key: 'slowCallDurationThresholdMs', min: 0, max: 600_000 },
